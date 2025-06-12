@@ -31,6 +31,57 @@ main {
     overflow-y: auto;
 }
 
+/* Logo section */
+.logo-section {
+    text-align: center;
+    padding: 40px 20px 30px 20px;
+    margin-bottom: 10px;
+}
+
+.logo {
+    max-width: 200px;
+    height: auto;
+    opacity: 0.9;
+}
+
+/* Start section */
+.start-section {
+    text-align: center;
+    padding: 80px 20px;
+    margin-bottom: 60px;
+    max-height: 300px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.start-section.hiding {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 20px;
+    margin-bottom: 0;
+    transform: translateY(-20px);
+}
+
+.start-playing-btn {
+    background: #ffffff;
+    color: #667eea;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    min-width: 180px;
+}
+
+.start-playing-btn:hover {
+    background: #f8faff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
 /* Loading and error states */
 .loading, .no-stories {
     text-align: center;
@@ -52,15 +103,16 @@ main {
 
 /* Story card */
 .story-card {
-    background: #fff;
+    background: rgba(255, 255, 255, 0.85);
     border-radius: 12px;
     padding: 20px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 2px solid transparent;
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
     cursor: pointer;
+    margin: 0 16px;
 }
 
 .story-card::before {
@@ -82,8 +134,9 @@ main {
 
 .story-card.playing {
     border-color: #667eea;
-    background: linear-gradient(135deg, #f8faff 0%, #e6f3ff 100%);
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+    margin: 0;
 }
 
 .story-card.playing::before {
@@ -109,6 +162,11 @@ main {
     font-weight: 600;
     color: #2d3748;
     line-height: 1.4;
+    transition: font-size 0.3s ease;
+}
+
+.story-card.playing .story-name {
+    font-size: 1.7rem;
 }
 
 /* Audio section */
@@ -132,10 +190,15 @@ main {
 
 /* Audio controls */
 .audio-controls {
-    display: flex;
+    display: none;
     justify-content: center;
     gap: 12px;
     align-items: center;
+    transition: all 0.3s ease;
+}
+
+.story-card.playing .audio-controls {
+    display: flex;
 }
 
 .control-btn {
@@ -173,7 +236,7 @@ main {
 .control-btn.play-pause {
     background: #667eea;
     color: white;
-    min-width: 80px;
+    min-width: 100px;
     padding: 12px 20px;
     font-size: 0.9rem;
 }

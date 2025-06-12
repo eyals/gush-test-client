@@ -19,6 +19,8 @@ transitionCue.volume = 0.7;
 const loadingEl = document.getElementById('loading');
 const noStoriesEl = document.getElementById('no-stories');
 const storiesListEl = document.getElementById('stories-list');
+const startSectionEl = document.getElementById('start-section');
+const startPlayingBtnEl = document.getElementById('start-playing-btn');
 
 // Utility function to shuffle array
 function shuffleArray(array) {
@@ -170,6 +172,12 @@ function handleAudioControl(event) {
     if (!action) {
         const card = event.target.closest('.story-card');
         if (card && !card.classList.contains('playing')) {
+            // Rewind the audio before playing
+            const audio = card.querySelector('.audio-player');
+            if (audio) {
+                audio.currentTime = 0;
+            }
+            
             // Simulate play button click
             const playPauseBtn = card.querySelector('.play-pause');
             if (playPauseBtn) {
@@ -205,9 +213,9 @@ function handleAudioControl(event) {
                         progressSection.classList.remove('hidden');
                     }
                     
-                    // Scroll playing card with 100px offset from top
+                    // Scroll playing card with 250px offset from top
                     const cardTop = card.offsetTop;
-                    const scrollTarget = Math.max(0, cardTop - 100);
+                    const scrollTarget = Math.max(0, cardTop - 250);
                     card.closest('main').scrollTo({ 
                         top: scrollTarget, 
                         behavior: 'smooth' 
@@ -260,6 +268,28 @@ function autoAdvanceToNext(currentIndex) {
             nextPlayBtn.click();
         }
     }
+}
+
+// Handle start playing button click
+function handleStartPlaying() {
+    // Hide the start section with animation
+    startSectionEl.classList.add('hiding');
+    
+    // Start playing the first story after the animation
+    setTimeout(() => {
+        const firstCard = document.querySelector('[data-index="0"]');
+        if (firstCard) {
+            const audio = firstCard.querySelector('.audio-player');
+            if (audio) {
+                audio.currentTime = 0; // Rewind to start
+            }
+            
+            const firstPlayBtn = firstCard.querySelector('.play-pause');
+            if (firstPlayBtn) {
+                firstPlayBtn.click();
+            }
+        }
+    }, 150); // Start playing during the animation for smooth transition
 }
 
 // Set up audio event listeners
@@ -336,6 +366,10 @@ function renderStories(storiesData) {
     // Set up event listeners
     storiesListEl.addEventListener('click', handleAudioControl);
     setupAudioListeners();
+    
+    // Set up start button
+    startPlayingBtnEl.addEventListener('click', handleStartPlaying);
+    
 }
 
 // Initialize the app
