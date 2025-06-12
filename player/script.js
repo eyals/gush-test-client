@@ -184,6 +184,7 @@ function handleAudioControl(event) {
                 playPauseBtn.click();
             }
         }
+        // If card is already playing, do nothing (only pause button should stop it)
         return;
     }
 
