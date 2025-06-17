@@ -113,6 +113,9 @@ main {
     overflow: hidden;
     cursor: pointer;
     margin: 0 16px;
+    min-height: 500px;
+    display: flex;
+    flex-direction: column;
 }
 
 .story-card::before {
@@ -121,10 +124,10 @@ main {
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: white;
-    transform: scaleX(0);
-    transition: transform 0.3s ease;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.85);
+    z-index: 1;
+    border-radius: 12px;
 }
 
 .story-card:hover {
@@ -146,6 +149,8 @@ main {
 /* Story info */
 .story-info {
     margin-bottom: 16px;
+    position: relative;
+    z-index: 2;
 }
 
 .show-name {
@@ -174,6 +179,9 @@ main {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    position: relative;
+    z-index: 2;
+    margin-top: auto;
 }
 
 .audio-player {

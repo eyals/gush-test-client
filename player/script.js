@@ -44,7 +44,7 @@ async function fetchStories() {
                 mixedAudioUrl,
                 updatedAt,
                 showSlug,
-                shows(name)
+                shows(name, image_url)
             `)
             .or('ttsAudioUrl.not.is.null,mixedAudioUrl.not.is.null')
             .order('updatedAt', { ascending: false })
@@ -67,9 +67,10 @@ function createStoryCard(story, index) {
     const showName = story.shows?.name || 'Unknown Show';
     const storyName = story.title || 'Untitled Story';
     const audioUrl = story.mixedAudioUrl || story.ttsAudioUrl;
+    const imageUrl = story.shows?.image_url;
 
     return `
-        <div class="story-card" data-story-id="${story.id}" data-index="${index}">
+        <div class="story-card" data-story-id="${story.id}" data-index="${index}"${imageUrl ? ` style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"` : ''}>
             <div class="story-info">
                 <h3 class="show-name">${showName}</h3>
                 <h4 class="story-name">${storyName}</h4>
