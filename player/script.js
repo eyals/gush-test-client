@@ -1,132 +1,123 @@
 // Supabase configuration
-const SUPABASE_URL = 'https://ifsdyucvpgshyglmoxkp.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc2R5dWN2cGdzaHlnbG1veGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NzkxNzYsImV4cCI6MjA2NTE1NTE3Nn0.fie3isEuyIvWjQGvgHtaBpbeZJTcJXqrJyuwFSpPneA';
+var SUPABASE_URL = 'https://ifsdyucvpgshyglmoxkp.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc2R5dWN2cGdzaHlnbG1veGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NzkxNzYsImV4cCI6MjA2NTE1NTE3Nn0.fie3isEuyIvWjQGvgHtaBpbeZJTcJXqrJyuwFSpPneA';
 
 // Initialize Supabase client
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Global state
-let currentAudio = null;
-let autoAdvanceEnabled = true;
-let stories = [];
+var currentAudio = null;
+var autoAdvanceEnabled = true;
+var stories = [];
 
 // Create and preload transition cue sound effect
-const transitionCue = new Audio('https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/audio/drop.mp3');
+var transitionCue = new Audio('https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/audio/drop.mp3');
 transitionCue.preload = 'auto';
 transitionCue.volume = 0.7;
 
 // DOM elements
-const loadingEl = document.getElementById('loading');
-const noStoriesEl = document.getElementById('no-stories');
-const storiesListEl = document.getElementById('stories-list');
-const startSectionEl = document.getElementById('start-section');
-const startPlayingBtnEl = document.getElementById('start-playing-btn');
+var loadingEl = document.getElementById('loading');
+var noStoriesEl = document.getElementById('no-stories');
+var storiesListEl = document.getElementById('stories-list');
+var startSectionEl = document.getElementById('start-section');
+var startPlayingBtnEl = document.getElementById('start-playing-btn');
 
 // Utility function to shuffle array
 function shuffleArray(array) {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    var shuffled = array.slice();
+    for (var i = shuffled.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = shuffled[i];
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
     }
     return shuffled;
 }
 
 // Fetch stories from Supabase
-async function fetchStories() {
-    try {
-        const { data, error } = await supabase
-            .from('stories')
-            .select(`
-                id,
-                title,
-                ttsAudioUrl,
-                mixedAudioUrl,
-                updatedAt,
-                showSlug,
-                shows(name, image_url)
-            `)
-            .or('ttsAudioUrl.not.is.null,mixedAudioUrl.not.is.null')
-            .order('updatedAt', { ascending: false })
-            .limit(50);
-
-        if (error) {
+function fetchStories() {
+    return supabase
+        .from('stories')
+        .select('id,title,ttsAudioUrl,mixedAudioUrl,updatedAt,showSlug,shows(name,image_url)')
+        .or('ttsAudioUrl.not.is.null,mixedAudioUrl.not.is.null')
+        .order('updatedAt', { ascending: false })
+        .limit(50)
+        .then(function(response) {
+            if (response.error) {
+                console.error('Error fetching stories:', response.error);
+                return [];
+            }
+            return response.data || [];
+        })
+        .catch(function(error) {
             console.error('Error fetching stories:', error);
             return [];
-        }
-
-        return data || [];
-    } catch (error) {
-        console.error('Error fetching stories:', error);
-        return [];
-    }
+        });
 }
 
 // Create story card HTML
 function createStoryCard(story, index) {
-    const showName = story.shows?.name || 'Unknown Show';
-    const storyName = story.title || 'Untitled Story';
-    const audioUrl = story.mixedAudioUrl || story.ttsAudioUrl;
-    const imageUrl = story.shows?.image_url;
+    var showName = (story.shows && story.shows.name) || 'Unknown Show';
+    var storyName = story.title || 'Untitled Story';
+    var audioUrl = story.mixedAudioUrl || story.ttsAudioUrl;
+    var imageUrl = (story.shows && story.shows.image_url) || '';
 
-    return `
-        <div class="story-card" data-story-id="${story.id}" data-index="${index}" data-image-url="${imageUrl || ''}">`
-            <div class="story-info">
-                <h3 class="show-name">${showName}</h3>
-                <h4 class="story-name">${storyName}</h4>
-            </div>
-            <div class="audio-section">
-                ${audioUrl ? `
-                    <audio class="audio-player" preload="metadata">
-                        <source src="${audioUrl}" type="audio/mpeg">
-                        Your browser does not support the audio element.
-                    </audio>
-                    <div class="audio-controls">
-                        <button class="control-btn skip-back" data-action="skip-back">
-                            <span>◀︎◀︎</span>
-                        </button>
-                        <button class="control-btn play-pause" data-action="play-pause">
-                            <span class="play-icon">&#9654;</span>
-                            <span class="pause-icon hidden">&#9612;&#9612;</span>
-                        </button>
-                        <button class="control-btn skip-forward" data-action="skip-forward">
-                            <span>▶︎▶︎</span>
-                        </button>
-                    </div>
-                    <div class="progress-section hidden">
-                        <div class="progress-bar">
-                            <div class="progress-fill"></div>
-                        </div>
-                        <div class="time-display">
-                            <span class="current-time">0:00</span>
-                            <span class="duration">0:00</span>
-                        </div>
-                    </div>
-                ` : `
-                    <div class="audio-error">Audio not loaded</div>
-                `}
-            </div>
-        </div>
-    `;
+    return '<div class="story-card" data-story-id="' + story.id + '" data-index="' + index + '" data-image-url="' + imageUrl + '">' +
+        '<div class="story-info">' +
+            '<h3 class="show-name">' + showName + '</h3>' +
+            '<h4 class="story-name">' + storyName + '</h4>' +
+        '</div>' +
+        '<div class="audio-section">' +
+            (audioUrl ? 
+                '<audio class="audio-player" preload="metadata">' +
+                    '<source src="' + audioUrl + '" type="audio/mpeg">' +
+                    'Your browser does not support the audio element.' +
+                '</audio>' +
+                '<div class="audio-controls">' +
+                    '<button class="control-btn skip-back" data-action="skip-back">' +
+                        '<span>◀︎◀︎</span>' +
+                    '</button>' +
+                    '<button class="control-btn play-pause" data-action="play-pause">' +
+                        '<span class="play-icon">&#9654;</span>' +
+                        '<span class="pause-icon hidden">&#9612;&#9612;</span>' +
+                    '</button>' +
+                    '<button class="control-btn skip-forward" data-action="skip-forward">' +
+                        '<span>▶︎▶︎</span>' +
+                    '</button>' +
+                '</div>' +
+                '<div class="progress-section hidden">' +
+                    '<div class="progress-bar">' +
+                        '<div class="progress-fill"></div>' +
+                    '</div>' +
+                    '<div class="time-display">' +
+                        '<span class="current-time">0:00</span>' +
+                        '<span class="duration">0:00</span>' +
+                    '</div>' +
+                '</div>'
+            : 
+                '<div class="audio-error">Audio not loaded</div>'
+            ) +
+        '</div>' +
+    '</div>';
 }
 
 // Format time for display
 function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    var mins = Math.floor(seconds / 60);
+    var secs = Math.floor(seconds % 60);
+    return mins + ':' + (secs < 10 ? '0' + secs : secs);
 }
 
 // Update progress bar for a specific audio element
 function updateProgress(audio) {
-    const card = audio.closest('.story-card');
-    const progressFill = card.querySelector('.progress-fill');
-    const currentTimeEl = card.querySelector('.current-time');
-    const durationEl = card.querySelector('.duration');
+    var card = audio.closest('.story-card');
+    var progressFill = card.querySelector('.progress-fill');
+    var currentTimeEl = card.querySelector('.current-time');
+    var durationEl = card.querySelector('.duration');
     
     if (audio.duration) {
-        const progress = (audio.currentTime / audio.duration) * 100;
-        progressFill.style.width = `${progress}%`;
+        var progress = (audio.currentTime / audio.duration) * 100;
+        progressFill.style.width = progress + '%';
         currentTimeEl.textContent = formatTime(audio.currentTime);
         durationEl.textContent = formatTime(audio.duration);
     }
@@ -134,8 +125,8 @@ function updateProgress(audio) {
 
 // Stop all currently playing audio
 function stopAllAudio() {
-    const allAudio = document.querySelectorAll('.audio-player');
-    allAudio.forEach(audio => {
+    var allAudio = document.querySelectorAll('.audio-player');
+    allAudio.forEach(function(audio) {
         if (!audio.paused) {
             audio.pause();
             audio.currentTime = 0;
@@ -143,14 +134,14 @@ function stopAllAudio() {
     });
     
     // Remove active state from all cards and hide progress bars
-    document.querySelectorAll('.story-card').forEach(card => {
+    document.querySelectorAll('.story-card').forEach(function(card) {
         card.classList.remove('playing');
         // Remove background images from all cards
         card.style.backgroundImage = '';
         card.style.backgroundSize = '';
         card.style.backgroundPosition = '';
         card.style.backgroundRepeat = '';
-        const progressSection = card.querySelector('.progress-section');
+        var progressSection = card.querySelector('.progress-section');
         if (progressSection) {
             progressSection.classList.add('hidden');
         }
