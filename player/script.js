@@ -70,7 +70,7 @@ function createStoryCard(story, index) {
     const imageUrl = story.shows?.image_url;
 
     return `
-        <div class="story-card" data-story-id="${story.id}" data-index="${index}"${imageUrl ? ` style="background-image: url('${imageUrl}'); background-size: cover; background-position: center; background-repeat: no-repeat;"` : ''}>
+        <div class="story-card" data-story-id="${story.id}" data-index="${index}" data-image-url="${imageUrl || ''}">`
             <div class="story-info">
                 <h3 class="show-name">${showName}</h3>
                 <h4 class="story-name">${storyName}</h4>
@@ -145,6 +145,11 @@ function stopAllAudio() {
     // Remove active state from all cards and hide progress bars
     document.querySelectorAll('.story-card').forEach(card => {
         card.classList.remove('playing');
+        // Remove background images from all cards
+        card.style.backgroundImage = '';
+        card.style.backgroundSize = '';
+        card.style.backgroundPosition = '';
+        card.style.backgroundRepeat = '';
         const progressSection = card.querySelector('.progress-section');
         if (progressSection) {
             progressSection.classList.add('hidden');
@@ -209,6 +214,15 @@ function handleAudioControl(event) {
                     pauseIcon.classList.remove('hidden');
                     autoAdvanceEnabled = true; // Re-enable auto-advance on new play
                     
+                    // Apply background image for playing card
+                    const imageUrl = card.dataset.imageUrl;
+                    if (imageUrl) {
+                        card.style.backgroundImage = `url('${imageUrl}')`;
+                        card.style.backgroundSize = 'cover';
+                        card.style.backgroundPosition = 'center';
+                        card.style.backgroundRepeat = 'no-repeat';
+                    }
+                    
                     // Show progress bar for this card
                     const progressSection = card.querySelector('.progress-section');
                     if (progressSection) {
@@ -233,6 +247,12 @@ function handleAudioControl(event) {
                 pauseIcon.classList.add('hidden');
                 autoAdvanceEnabled = false; // Disable auto-advance when manually paused
                 currentAudio = null;
+                
+                // Remove background image for paused card
+                card.style.backgroundImage = '';
+                card.style.backgroundSize = '';
+                card.style.backgroundPosition = '';
+                card.style.backgroundRepeat = '';
                 
                 // Hide progress bar
                 const progressSection = card.querySelector('.progress-section');

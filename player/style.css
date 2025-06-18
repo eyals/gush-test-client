@@ -103,7 +103,7 @@ main {
 
 /* Story card */
 .story-card {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -113,7 +113,6 @@ main {
     overflow: hidden;
     cursor: pointer;
     margin: 0 16px;
-    min-height: 500px;
     display: flex;
     flex-direction: column;
 }
@@ -125,9 +124,10 @@ main {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(255, 255, 255, 0.85);
+    background: transparent;
     z-index: 1;
     border-radius: 12px;
+    transition: background 0.3s ease;
 }
 
 .story-card:hover {
@@ -137,13 +137,13 @@ main {
 
 .story-card.playing {
     border-color: #667eea;
-    background: #ffffff;
     box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
     margin: 0;
+    min-height: 500px;
 }
 
 .story-card.playing::before {
-    transform: scaleX(1);
+    background: rgba(0, 0, 0, 0.2);
 }
 
 /* Story info */
@@ -170,8 +170,15 @@ main {
     transition: font-size 0.3s ease;
 }
 
+.story-card.playing .show-name {
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+}
+
 .story-card.playing .story-name {
     font-size: 1.7rem;
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Audio section */
@@ -262,6 +269,20 @@ main {
     background: #5a67d8;
 }
 
+.story-card.playing .control-btn.skip-back,
+.story-card.playing .control-btn.skip-forward {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.story-card.playing .control-btn.skip-back:hover,
+.story-card.playing .control-btn.skip-forward:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    transform: translateY(-1px);
+}
+
 /* Progress section */
 .progress-section {
     margin-top: 12px;
@@ -289,6 +310,19 @@ main {
     font-size: 0.8rem;
     color: #718096;
     font-weight: 500;
+}
+
+.story-card.playing .progress-bar {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.story-card.playing .progress-fill {
+    background: #ffffff;
+}
+
+.story-card.playing .time-display {
+    color: #ffffff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* Audio error */
