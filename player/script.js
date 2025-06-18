@@ -148,9 +148,9 @@ function stopAllAudio() {
     });
     
     // Reset all play buttons
-    document.querySelectorAll('.play-pause').forEach(btn => {
-        const playIcon = btn.querySelector('.play-icon');
-        const pauseIcon = btn.querySelector('.pause-icon');
+    document.querySelectorAll('.play-pause').forEach(function(btn) {
+        var playIcon = btn.querySelector('.play-icon');
+        var pauseIcon = btn.querySelector('.pause-icon');
         if (playIcon && pauseIcon) {
             playIcon.classList.remove('hidden');
             pauseIcon.classList.add('hidden');
@@ -162,21 +162,21 @@ function stopAllAudio() {
 
 // Handle card and audio control clicks
 function handleAudioControl(event) {
-    const controlBtn = event.target.closest('.control-btn');
-    const action = controlBtn?.dataset.action;
+    var controlBtn = event.target.closest('.control-btn');
+    var action = controlBtn && controlBtn.dataset.action;
     
     // If not a control button, check if it's a card click
     if (!action) {
-        const card = event.target.closest('.story-card');
+        var card = event.target.closest('.story-card');
         if (card && !card.classList.contains('playing')) {
             // Rewind the audio before playing
-            const audio = card.querySelector('.audio-player');
+            var audio = card.querySelector('.audio-player');
             if (audio) {
                 audio.currentTime = 0;
             }
             
             // Simulate play button click
-            const playPauseBtn = card.querySelector('.play-pause');
+            var playPauseBtn = card.querySelector('.play-pause');
             if (playPauseBtn) {
                 playPauseBtn.click();
             }
@@ -185,11 +185,11 @@ function handleAudioControl(event) {
         return;
     }
 
-    const card = event.target.closest('.story-card');
-    const audio = card.querySelector('.audio-player');
-    const playPauseBtn = card.querySelector('.play-pause');
-    const playIcon = playPauseBtn.querySelector('.play-icon');
-    const pauseIcon = playPauseBtn.querySelector('.pause-icon');
+    var card = event.target.closest('.story-card');
+    var audio = card.querySelector('.audio-player');
+    var playPauseBtn = card.querySelector('.play-pause');
+    var playIcon = playPauseBtn.querySelector('.play-icon');
+    var pauseIcon = playPauseBtn.querySelector('.pause-icon');
 
     switch (action) {
         case 'play-pause':
@@ -198,7 +198,7 @@ function handleAudioControl(event) {
                 stopAllAudio();
                 
                 // Play this audio
-                audio.play().then(() => {
+                audio.play().then(function() {
                     currentAudio = audio;
                     card.classList.add('playing');
                     playIcon.classList.add('hidden');
@@ -206,28 +206,28 @@ function handleAudioControl(event) {
                     autoAdvanceEnabled = true; // Re-enable auto-advance on new play
                     
                     // Apply background image for playing card
-                    const imageUrl = card.dataset.imageUrl;
+                    var imageUrl = card.dataset.imageUrl;
                     if (imageUrl) {
-                        card.style.backgroundImage = `url('${imageUrl}')`;
+                        card.style.backgroundImage = 'url(\'' + imageUrl + '\')';
                         card.style.backgroundSize = 'cover';
                         card.style.backgroundPosition = 'center';
                         card.style.backgroundRepeat = 'no-repeat';
                     }
                     
                     // Show progress bar for this card
-                    const progressSection = card.querySelector('.progress-section');
+                    var progressSection = card.querySelector('.progress-section');
                     if (progressSection) {
                         progressSection.classList.remove('hidden');
                     }
                     
                     // Scroll playing card with 250px offset from top
-                    const cardTop = card.offsetTop;
-                    const scrollTarget = Math.max(0, cardTop - 250);
+                    var cardTop = card.offsetTop;
+                    var scrollTarget = Math.max(0, cardTop - 250);
                     card.closest('main').scrollTo({ 
                         top: scrollTarget, 
                         behavior: 'smooth' 
                     });
-                }).catch(error => {
+                }).catch(function(error) {
                     console.error('Error playing audio:', error);
                 });
             } else {
@@ -246,7 +246,7 @@ function handleAudioControl(event) {
                 card.style.backgroundRepeat = '';
                 
                 // Hide progress bar
-                const progressSection = card.querySelector('.progress-section');
+                var progressSection = card.querySelector('.progress-section');
                 if (progressSection) {
                     progressSection.classList.add('hidden');
                 }
@@ -271,12 +271,12 @@ function handleAudioControl(event) {
 function autoAdvanceToNext(currentIndex) {
     if (!autoAdvanceEnabled) return;
 
-    const nextIndex = currentIndex + 1;
+    var nextIndex = currentIndex + 1;
     if (nextIndex >= stories.length) return; // No more stories
 
-    const nextCard = document.querySelector(`[data-index="${nextIndex}"]`);
+    var nextCard = document.querySelector('[data-index="' + nextIndex + '"]');
     if (nextCard) {
-        const nextPlayBtn = nextCard.querySelector('.play-pause');
+        var nextPlayBtn = nextCard.querySelector('.play-pause');
         if (nextPlayBtn) {
             nextPlayBtn.click();
         }
