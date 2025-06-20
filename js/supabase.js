@@ -57,9 +57,15 @@ export async function fetchStories() {
   try {
     // If supabase client isn't initialized, throw error
     if (!supabase) {
-      throw new Error('Supabase client not initialized - check your environment variables');
+      const errorMsg = 'Supabase client not initialized - check your environment variables';
+      console.error(errorMsg, {
+        hasSupabaseUrl: !!window.env?.VITE_SUPABASE_URL,
+        hasSupabaseKey: !!window.env?.VITE_SUPABASE_ANON_KEY
+      });
+      throw new Error(errorMsg);
     }
     
+    console.log('Fetching stories from Supabase...');
     const { data, error } = await supabase
       .from('stories')
       .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url)')
@@ -68,12 +74,20 @@ export async function fetchStories() {
       .limit(50);
 
     if (error) {
+      console.error('Supabase query error:', {
+        message: error.message,
+        code: error.code,
+        status: error.status
+      });
       throw error;
     }
     
     if (!data || !data.length) {
+      console.warn('No stories found in the database');
       return [];
     }
+    
+    console.log(`Fetched ${data.length} stories from Supabase`);
 
     // Transform the data to match your existing format
     const transformedStories = data.map(story => {

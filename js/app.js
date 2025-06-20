@@ -180,17 +180,29 @@ class MusedropsPlayer {
       let errorMessage = '';
       
       try {
+        console.log('Attempting to load stories from Supabase...');
         stories = await fetchStories();
+        console.log('Successfully fetched stories from Supabase');
       } catch (error) {
         errorMessage = error.message || 'Unknown error';
+        console.error('Error loading stories from Supabase:', {
+          message: error.message,
+          name: error.name,
+          status: error.status
+        });
       }
       
       // If we got stories from Supabase, use them
       if (stories && stories.length > 0) {
+        console.log(`Using ${stories.length} stories from Supabase`);
         this.stories = stories;
       } else {
         // If no stories from Supabase, use mock data
-        this.showError('No stories from Supabase. Using demo content.');
+        const message = errorMessage 
+          ? `Could not load stories: ${errorMessage}. Using demo content.`
+          : 'No stories available. Using demo content.';
+        console.warn(message);
+        this.showError(message);
         this.stories = mockStories;
       }
       
