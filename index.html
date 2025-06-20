@@ -38,6 +38,10 @@
           <div class="start-hint">
             <span class="start-hint-text">Tap anywhere to start</span>
           </div>
+          <!-- Debug button -->
+          <button id="debug-start" style="position: fixed; top: 20px; right: 20px; padding: 10px; background: white; color: black; border: none; border-radius: 5px; z-index: 1001;">
+            Debug Start
+          </button>
         </div>
       </div>
 
@@ -56,7 +60,7 @@
                 <span class="material-icons-round">bookmark_border</span>
               </button>
               <button class="action-btn" aria-label="Share">
-                <span class="material-icons-round">ios_share</span>
+                <span class="material-icons-round">share</span>
               </button>
               <button class="action-btn like-btn" aria-label="Like">
                 <span class="material-icons-round">favorite_border</span>
@@ -106,6 +110,30 @@
       />
     </audio>
 
+    <!-- Simple error handler without alerts -->
+    <script>
+      window.addEventListener('error', function(e) {
+        console.error('Global error:', e);
+        const errorDiv = document.createElement('div');
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.bottom = '10px';
+        errorDiv.style.right = '10px';
+        errorDiv.style.background = 'rgba(255,0,0,0.8)';
+        errorDiv.style.color = 'white';
+        errorDiv.style.padding = '5px 10px';
+        errorDiv.style.zIndex = '1000';
+        errorDiv.style.maxWidth = '80%';
+        errorDiv.style.wordBreak = 'break-word';
+        errorDiv.style.borderRadius = '4px';
+        errorDiv.style.fontSize = '12px';
+        errorDiv.style.maxHeight = '100px';
+        errorDiv.style.overflow = 'auto';
+        errorDiv.textContent = 'Error: ' + (e.message || 'Unknown error');
+        document.body.appendChild(errorDiv);
+      });
+    </script>
+    
+    <!-- Load app scripts -->
     <script src="/env.js"></script>
     <script type="module" src="./js/app.js"></script>
   </body>

@@ -1,15 +1,41 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-// Initialize the Supabase client with environment variables
-const supabaseUrl = window.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = window.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false
+// Helper function to safely get environment variables with fallbacks
+function getEnvVar(name, fallback = '') {
+  try {
+    // Check if running in browser with env.js loaded
+    if (typeof window !== 'undefined' && window.env && window.env[name] !== undefined) {
+      return window.env[name];
+    }
+    // Check for Vite environment variables during development
+    if (import.meta && import.meta.env && import.meta.env[name] !== undefined) {
+      return import.meta.env[name];
+    }
+    return fallback;
+  } catch (e) {
+    console.warn(`Failed to get env var ${name}:`, e);
+    return fallback;
   }
-});
+}
+
+// Initialize the Supabase client with environment variables
+const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+
+// Only create Supabase client if we have the required variables
+let supabase = null;
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  });
+} else {
+  console.warn('Supabase client not initialized - missing required environment variables');
+}
+
+export { supabase };
 
 // Helper function to generate a random number between min and max (inclusive)
 function getRandomLikeCount(min = 10, max = 300) {
@@ -29,6 +55,12 @@ function shuffleArray(array) {
 // Helper function to fetch stories
 export async function fetchStories() {
   try {
+    // If supabase client isn't initialized, return empty array
+    if (!supabase) {
+      console.warn('Supabase client not initialized - returning empty stories array');
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('stories')
       .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url)')
@@ -36,7 +68,10 @@ export async function fetchStories() {
       .order('updatedAt', { ascending: false })
       .limit(50);
 
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase query error:', error);
+      return [];
+    }
     if (!data || !data.length) return [];
 
     // Transform the data to match your existing format

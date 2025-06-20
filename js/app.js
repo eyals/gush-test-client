@@ -5,15 +5,54 @@ import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
   constructor() {
-    this.app = document.getElementById("app");
-    this.initialMode = document.getElementById("initial-mode");
-    this.playerView = document.getElementById("player-view");
-    this.storiesContainer = document.getElementById("stories-container");
-    this.playIndicator = document.querySelector(".play-indicator");
-    this.isTouchDevice =
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      navigator.msMaxTouchPoints > 0;
+    console.log('Initializing MusedropsPlayer...');
+    
+    // Wait for DOM to be fully loaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.initialize());
+    } else {
+      // DOM already loaded, initialize immediately
+      this.initialize();
+    }
+  }
+  
+  initialize() {
+    try {
+      // Get required elements with null checks
+      this.app = document.getElementById("app");
+      this.initialMode = document.getElementById("initial-mode");
+      this.playerView = document.getElementById("player-view");
+      this.storiesContainer = document.getElementById("stories-container");
+      this.playIndicator = document.querySelector(".play-indicator");
+      
+      // Check for required elements
+      if (!this.initialMode || !this.playerView || !this.storiesContainer) {
+        throw new Error('Required elements not found in DOM');
+      }
+      
+      this.isTouchDevice = 'ontouchstart' in window || 
+                          navigator.maxTouchPoints > 0 || 
+                          navigator.msMaxTouchPoints > 0;
+      
+      // Initialize state
+      this.isTransitioning = false;
+      this.touchStartX = null;
+      this.stories = [];
+      this.currentStoryIndex = 0;
+      this.isPlaying = false;
+      this.progressInterval = null;
+      this.hasInteracted = false;
+      
+      // Initialize the app
+      this.initializeEventListeners();
+      this.loadStories();
+      
+      console.log('MusedropsPlayer initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize MusedropsPlayer:', error);
+      // Show error to user
+      this.showError('Failed to initialize player. Please refresh the page.');
+    }
 
     // Player elements
     this.progressFill = document.querySelector(".progress-fill");
@@ -37,95 +76,77 @@ class MusedropsPlayer {
     this.progressInterval = null;
     this.hasInteracted = false;
     this.touchStartY = 0;
-
-    // Initialize
-    this.initEventListeners();
-    this.loadStories();
   }
 
-  async loadStories() {
-    try {
-      // Try to fetch from Supabase first
-      const stories = await fetchStories();
-      this.stories = stories;
-    } catch (error) {
-      console.warn("Falling back to mock stories:", error);
-      this.stories = mockStories;
-    } finally {
-      this.renderStories();
-    }
+  initializeAudio() {
+    // Audio initialization
   }
 
-  renderStories() {
-    if (!this.storiesContainer) return;
-    this.storiesContainer.innerHTML = "";
-
-    this.stories.forEach((story, index) => {
-      const storyEl = this.renderStory(story);
-      storyEl.dataset.index = index;
-      this.storiesContainer.appendChild(storyEl);
-    });
-
-    // The first story will be shown when the player is activated.
-  }
-
-  renderStory(story) {
-    const storyEl = document.createElement("div");
-    storyEl.className = "story";
-    storyEl.dataset.id = story.id;
-    // The background image is set via CSS in the updateStoryInfo method
-    return storyEl;
-  }
-
-  handleGestureStart(e) {
-    this.touchStartX = (e.touches ? e.touches[0] : e).clientX;
-  }
-
-  handleGestureEnd(e) {
-    const endX = (e.changedTouches ? e.changedTouches[0] : e).clientX;
-    const deltaX = this.touchStartX - endX;
-    const absDeltaX = Math.abs(deltaX);
+  showError(message) {
+    console.error(message);
+    const errorDiv = document.createElement('div');
+    errorDiv.style.position = 'fixed';
+    errorDiv.style.bottom = '20px';
+    errorDiv.style.left = '50%';
+    errorDiv.style.transform = 'translateX(-50%)';
+    errorDiv.style.background = 'rgba(255, 0, 0, 0.8)';
+    errorDiv.style.color = 'white';
+    errorDiv.style.padding = '10px 20px';
+    errorDiv.style.borderRadius = '5px';
+    errorDiv.style.zIndex = '10000';
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
     
-    // Minimum distance to consider it a swipe (in pixels)
-    const swipeThreshold = 50;
-
-    if (absDeltaX >= swipeThreshold) {
-      if (deltaX > 0) {
-        // Swiped left - go to next story
-        this.nextStory();
-      } else {
-        // Swiped right - go to previous story
-        this.previousStory();
-      }
-    } else if (absDeltaX < 10) {
-      // It's a tap, toggle play/pause unless it's on a button
-      if (!e.target.closest(".control-btn, .action-btn")) {
-        this.togglePlayPause();
-      }
-    }
+    // Remove after 5 seconds
+    setTimeout(() => {
+      errorDiv.remove();
+    }, 5000);
   }
-
-  initEventListeners() {
-    // Click anywhere on initial mode to start
-    if (this.initialMode) {
-      this.initialMode.addEventListener("click", (e) =>
-        this.handleStartButtonClick(e)
-      );
-      this.initialMode.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
+  
+  initializeEventListeners() {
+    console.log("Initializing event listeners...");
+    
+    try {
+      // Initial mode click/tap - use both touch and click for maximum compatibility
+      const handleInitialTap = (e) => {
+        if (e) {
           e.preventDefault();
-          this.handleStartButtonClick(e);
+          e.stopPropagation();
         }
-      });
-      this.initialMode.tabIndex = 0;
-      this.initialMode.setAttribute("role", "button");
-      this.initialMode.setAttribute(
-        "aria-label",
-        "Tap anywhere to start listening"
-      );
+        console.log("Initial mode tapped");
+        this.showPlayer();
+      };
+      
+      // Add multiple event types to ensure cross-device compatibility
+      this.initialMode.addEventListener('click', handleInitialTap, { passive: false });
+      this.initialMode.addEventListener('touchend', handleInitialTap, { passive: false });
+      
+      // Make sure the element is interactive
+      this.initialMode.style.cursor = 'pointer';
+      
+      // Add debug button handler if it exists
+      const debugButton = document.getElementById('debug-start');
+      if (debugButton) {
+        debugButton.addEventListener('click', handleInitialTap);
+      }
+      
+      console.log('Event listeners initialized');
+    } catch (error) {
+      console.error('Error initializing event listeners:', error);
+      this.showError('Error setting up player controls');
     }
-
-    // Click anywhere on player to toggle play/pause
+    if (this.forwardBtn) {
+      this.forwardBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.skipForward();
+      });
+    }
+    if (this.rewindBtn) {
+      this.rewindBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.skipBackward();
+      });
+    }
     if (this.playerView) {
       // Touch events
       this.playerView.addEventListener(
@@ -160,47 +181,169 @@ class MusedropsPlayer {
         }
       });
     }
+  }
 
-    // Player controls
-    if (this.rewindBtn) {
-      this.rewindBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.skipBackward();
-      });
-    }
-    if (this.forwardBtn) {
-      this.forwardBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.skipForward();
-      });
+  async loadStories() {
+    try {
+      // Show loading state
+      console.log('Loading stories...');
+      
+      // Try to fetch from Supabase first
+      let stories = [];
+      
+      try {
+        stories = await fetchStories();
+      } catch (error) {
+        console.warn('Error fetching stories from Supabase:', error);
+      }
+      
+      // If we got stories from Supabase, use them
+      if (stories && stories.length > 0) {
+        console.log('Loaded', stories.length, 'stories from Supabase');
+        this.stories = stories;
+      } else {
+        // If no stories from Supabase, use mock data
+        console.warn('No stories from Supabase, falling back to mock data');
+        this.stories = mockStories;
+      }
+      
+      // Make sure we have at least one story
+      if (!this.stories || this.stories.length === 0) {
+        throw new Error('No stories available');
+      }
+    } catch (error) {
+      // If there's any error, use mock data
+      console.warn('Error fetching stories, using mock data:', error);
+      this.stories = mockStories;
+    } finally {
+      // Always render whatever stories we have
+      this.renderStories();
     }
   }
 
+  renderStories() {
+    if (!this.storiesContainer) return;
+    this.storiesContainer.innerHTML = "";
+
+    this.stories.forEach((story, index) => {
+      const storyEl = this.renderStory(story);
+      storyEl.dataset.index = index;
+      this.storiesContainer.appendChild(storyEl);
+    });
+
+    // The first story will be shown when the player is activated.
+  }
+
+  renderStory(story) {
+    const storyEl = document.createElement("div");
+    storyEl.className = "story";
+    storyEl.dataset.id = story.id;
+    // The background image is set via CSS in the updateStoryInfo method
+    return storyEl;
+  }
+
+  handleGestureStart(e) {
+    this.touchStartX = (e.touches ? e.touches[0] : e).clientX;
+  }
+
+  handleGestureEnd(e) {
+    if (!this.touchStartX) return;
+    
+    const endX = (e.changedTouches ? e.changedTouches[0] : e).clientX;
+    const deltaX = this.touchStartX - endX;
+    const absDeltaX = Math.abs(deltaX);
+    
+    // Minimum distance to consider it a swipe (in pixels)
+    const swipeThreshold = 50;
+
+    if (absDeltaX >= swipeThreshold) {
+      if (deltaX > 0) {
+        // Swiped left - go to next story
+        this.nextStory();
+      } else {
+        // Swiped right - go to previous story
+        this.previousStory();
+      }
+    } else if (absDeltaX < 10) {
+      // It's a tap, toggle play/pause unless it's on a button
+      if (!e.target.closest(".control-btn, .action-btn")) {
+        this.togglePlayPause();
+      }
+    }
+    
+    // Reset touch start position
+    this.touchStartX = null;
+  }
+
   handleStartButtonClick(e) {
-    if (this.hasInteracted) return;
-    this.hasInteracted = true;
-
-    this.initialMode.classList.add("exiting");
-
-    setTimeout(() => {
-      this.initialMode.remove();
-      this.showPlayer();
-      this.play(); // Autoplay the first story
-    }, 500);
-
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
+    
+    if (this.hasInteracted) return;
+    this.hasInteracted = true;
+    
+    this.showPlayer();
+    
+    // Start playing the first story after a short delay
+    setTimeout(() => {
+      this.play();
+    }, 100);
   }
 
-  showPlayer() {
-    console.log("showPlayer called");
-    if (!this.playerView) {
-      console.error("playerView element not found");
-      return;
+  async showPlayer() {
+    try {
+      console.log("showPlayer called");
+      
+      // Check if we're already showing the player
+      if (this.isTransitioning || !this.playerView) {
+        return;
+      }
+      
+      this.isTransitioning = true;
+      
+      // Make sure we have stories loaded
+      if (!this.stories || this.stories.length === 0) {
+        await this.loadStories();
+      }
+      
+      // Remove the initial mode with animation if it exists
+      if (this.initialMode) {
+        this.initialMode.style.pointerEvents = 'none';
+        this.initialMode.classList.add("exiting");
+        
+        // Wait for the animation to complete before removing
+        setTimeout(() => {
+          if (this.initialMode) {
+            this.initialMode.remove();
+            this.initialMode = null;
+          }
+          this.finishShowingPlayer();
+        }, 300);
+      } else {
+        this.finishShowingPlayer();
+      }
+    } catch (error) {
+      console.error('Error in showPlayer:', error);
+      this.showError('Error loading player');
+      this.isTransitioning = false;
+    }
+  }
+  
+  finishShowingPlayer() {
+    try {
+      // Show the player and start with the first story
+      this.playerView.classList.remove("hidden");
+      this.showStory(0, true); // Auto-play the first story
+    } catch (error) {
+      console.error('Error finishing player show:', error);
+      this.showError('Error initializing player');
+    } finally {
+      this.isTransitioning = false;
     }
 
+    // Show the player
     this.playerView.classList.remove("hidden");
     this.showStory(0, false);
   }
@@ -280,18 +423,19 @@ class MusedropsPlayer {
   }
 
   updateProgress(currentTime, duration) {
-    if (!duration) return;
-
-    const progress = Math.min(100, (currentTime / duration) * 100);
-
-    if (this.progressFill) {
-      this.progressFill.style.width = `${progress}%`;
+    // Update progress bar if we have a valid duration
+    if (duration > 0) {
+      const progress = Math.min(100, (currentTime / duration) * 100);
+      if (this.progressFill) {
+        this.progressFill.style.width = `${progress}%`;
+      }
     }
 
-    // Update time display
+    // Always update time display
     if (this.progressTimes && this.progressTimes.length >= 2) {
       this.progressTimes[0].textContent = this.formatTime(currentTime);
-      this.progressTimes[1].textContent = this.formatTime(duration);
+      // Only show duration if it's a valid number greater than 0
+      this.progressTimes[1].textContent = duration > 0 ? this.formatTime(duration) : '-:--';
     }
   }
 
