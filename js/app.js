@@ -186,22 +186,21 @@ class MusedropsPlayer {
     
     // Handle audio loading
     if (this.audio) {
-      // Pause current audio
-      this.pause();
+      // If we're autoplaying, we want the state to remain "playing".
+      // so we don't call the full pause() method which sets isPlaying = false.
+      if (!autoPlay) {
+        this.pause();
+      } else {
+        this.audio.pause(); // just pause the element
+        this.stopProgressTracking(); // and stop the old timer
+      }
       
       // Set new audio source
       this.audio.src = currentStory.ttsAudioUrl;
       this.audio.load();
       
-      // Only auto-play if explicitly requested
       if (autoPlay) {
-        const playPromise = this.audio.play();
-        
-        if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            // Autoplay was prevented.
-          });
-        }
+        this.play(); // this will set isPlaying=true and start the new timer
       }
     }
     this.updatePlayIndicator(!autoPlay);
