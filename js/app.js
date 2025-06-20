@@ -30,6 +30,7 @@ class MusedropsPlayer {
     this.isPlaying = false;
     this.progressInterval = null;
     this.hasInteracted = false;
+    this.touchStartY = 0;
     
     // Initialize
     this.initEventListeners();
@@ -66,12 +67,26 @@ class MusedropsPlayer {
     return storyEl;
   }
 
-  handlePlayerClick(e) {
-    // We want to toggle play/pause unless the user is clicking on a button
-    if (e.target.closest('.control-btn, .action-btn')) {
-      return;
+  handleGestureStart(e) {
+    this.touchStartY = (e.touches ? e.touches[0] : e).clientY;
+  }
+
+  handleGestureEnd(e) {
+    const endY = (e.changedTouches ? e.changedTouches[0] : e).clientY;
+    const deltaY = this.touchStartY - endY;
+
+    if (Math.abs(deltaY) >= 50) {
+      if (deltaY > 0) {
+        this.nextStory();
+      } else {
+        this.previousStory();
+      }
+    } else {
+      // It's a tap, toggle play/pause unless it's on a button
+      if (!e.target.closest('.control-btn, .action-btn')) {
+        this.togglePlayPause();
+      }
     }
-    this.togglePlayPause();
   }
 
   initEventListeners() {
@@ -91,7 +106,13 @@ class MusedropsPlayer {
 
     // Click anywhere on player to toggle play/pause
     if (this.playerView) {
-      this.playerView.addEventListener('click', this.handlePlayerClick.bind(this));
+      // Touch events
+      this.playerView.addEventListener('touchstart', this.handleGestureStart.bind(this), { passive: true });
+      this.playerView.addEventListener('touchend', this.handleGestureEnd.bind(this));
+      // Mouse events
+      this.playerView.addEventListener('mousedown', this.handleGestureStart.bind(this));
+      this.playerView.addEventListener('mouseup', this.handleGestureEnd.bind(this));
+
       this.audio.addEventListener('ended', this.handleStoryEnd.bind(this));
       this.audio.addEventListener('play', () => this.updatePlayIndicator(false));
       this.audio.addEventListener('pause', () => this.updatePlayIndicator(true));
@@ -313,10 +334,19 @@ class MusedropsPlayer {
       
       // Go to the next story after 2.5s total (500ms + 2000ms)
       setTimeout(() => {
-        const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
-        this.showStory(nextIndex, true);
+        this.nextStory();
       }, 2000);
     }, 500);
+  }
+
+  nextStory() {
+    const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
+    this.showStory(nextIndex, true);
+  }
+
+  previousStory() {
+    const prevIndex = (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
+    this.showStory(prevIndex, true);
   }
 
 } // End of MusedropsPlayer class
