@@ -2,8 +2,12 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const dotenv = require('dotenv');
 
-const PORT = 3030;
+// Load environment variables from .env file
+dotenv.config();
+
+const PORT = process.env.PORT || 3030;
 const MIME_TYPES = {
   '.html': 'text/html',
   '.js': 'text/javascript',
@@ -28,6 +32,18 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   console.log(`\n${req.method} ${req.url}`);
   
+  // Serve environment variables
+  if (req.url === '/env.js') {
+    res.writeHead(200, { 'Content-Type': 'application/javascript' });
+    res.end(`
+      window.env = {
+        VITE_SUPABASE_URL: '${process.env.VITE_SUPABASE_URL || 'https://ifsdyucvpgshyglmoxkp.supabase.co'}',
+        VITE_SUPABASE_ANON_KEY: '${process.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc2R5dWN2cGdzaHlnbG1veGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NzkxNzYsImV4cCI6MjA2NTE1NTE3Nn0.fie3isEuyIvWjQGvgHtaBpbeZJTcJXqrJyuwFSpPneA'}'
+      };
+    `);
+    return;
+  }
+
   // Parse URL
   const parsedUrl = url.parse(req.url);
   // Extract URL path

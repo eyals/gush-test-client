@@ -1,4 +1,6 @@
-// Import mock stories
+// Import Supabase client and fetch function
+import { fetchStories } from "./supabase.js";
+// Keep mock stories as fallback
 import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
@@ -43,10 +45,14 @@ class MusedropsPlayer {
 
   async loadStories() {
     try {
-      this.stories = mockStories;
-      this.renderStories();
+      // Try to fetch from Supabase first
+      const stories = await fetchStories();
+      this.stories = stories;
     } catch (error) {
-      console.error("Error loading stories:", error);
+      console.warn("Falling back to mock stories:", error);
+      this.stories = mockStories;
+    } finally {
+      this.renderStories();
     }
   }
 
