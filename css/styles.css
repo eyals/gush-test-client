@@ -158,7 +158,7 @@ html, body, #app {
   flex-direction: column;
   justify-content: space-between;
   padding: 60px 24px 40px;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0) 60%, rgba(0,0,0,0.7) 100%);
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 50%);
   pointer-events: none; /* Allow clicks to pass through to player-view */
 }
 
@@ -222,14 +222,14 @@ html, body, #app {
 }
 
 .story-series {
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 500;
   opacity: 0.9;
   margin-bottom: 4px;
 }
 
 .story-title {
-  font-size: 32px;
+  font-size: 50px;
   font-weight: 600;
   line-height: 1.2;
   margin-bottom: 16px;
