@@ -16,6 +16,16 @@ function getRandomLikeCount(min = 10, max = 300) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+// Helper function to shuffle an array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+  const newArray = [...array];
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+}
+
 // Helper function to fetch stories
 export async function fetchStories() {
   try {
@@ -27,10 +37,10 @@ export async function fetchStories() {
       .limit(50);
 
     if (error) throw error;
-    if (!data) return [];
+    if (!data || !data.length) return [];
 
     // Transform the data to match your existing format
-    return data.map(story => ({
+    const transformedStories = data.map(story => ({
       id: story.id,
       title: story.title,
       // Generate a random duration between 30 and 300 seconds (5 minutes)
@@ -44,6 +54,9 @@ export async function fetchStories() {
         count: getRandomLikeCount()
       }]
     }));
+
+    // Return shuffled array of stories
+    return shuffleArray(transformedStories);
   } catch (error) {
     console.error('Error fetching stories:', error);
     return [];

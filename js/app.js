@@ -78,20 +78,26 @@ class MusedropsPlayer {
   }
 
   handleGestureStart(e) {
-    this.touchStartY = (e.touches ? e.touches[0] : e).clientY;
+    this.touchStartX = (e.touches ? e.touches[0] : e).clientX;
   }
 
   handleGestureEnd(e) {
-    const endY = (e.changedTouches ? e.changedTouches[0] : e).clientY;
-    const deltaY = this.touchStartY - endY;
+    const endX = (e.changedTouches ? e.changedTouches[0] : e).clientX;
+    const deltaX = this.touchStartX - endX;
+    const absDeltaX = Math.abs(deltaX);
+    
+    // Minimum distance to consider it a swipe (in pixels)
+    const swipeThreshold = 50;
 
-    if (Math.abs(deltaY) >= 50) {
-      if (deltaY > 0) {
+    if (absDeltaX >= swipeThreshold) {
+      if (deltaX > 0) {
+        // Swiped left - go to next story
         this.nextStory();
       } else {
+        // Swiped right - go to previous story
         this.previousStory();
       }
-    } else {
+    } else if (absDeltaX < 10) {
       // It's a tap, toggle play/pause unless it's on a button
       if (!e.target.closest(".control-btn, .action-btn")) {
         this.togglePlayPause();
