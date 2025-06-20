@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="/manifest.json" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <title>Musedrops</title>
+  </head>
+  <body>
+    <div id="app">
+      <!-- Initial mode with gradient background -->
+      <div id="initial-mode" class="initial-mode">
+        <div class="initial-content">
+          <img
+            src="https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/md-logo-white.svg"
+            alt="Musedrops"
+            class="initial-logo"
+          />
+          <div class="swipe-hint">
+            <span class="material-icons-round">swipe_up</span>
+            <p>Swipe to start listening</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main player view (initially hidden) -->
+      <div id="player-view" class="hidden">
+        <div id="stories-container" class="stories-container">
+          <!-- Stories will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Player controls overlay -->
+        <div class="player-controls">
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="controls-row">
+            <button
+              id="rewind-btn"
+              class="control-btn"
+              aria-label="Rewind 10 seconds"
+            >
+              <span class="material-icons-round">replay_10</span>
+            </button>
+            <button
+              id="play-pause-btn"
+              class="control-btn play-pause"
+              aria-label="Play/Pause"
+            >
+              <span class="material-icons-round play-icon">play_arrow</span>
+              <span class="material-icons-round pause-icon hidden">pause</span>
+            </button>
+            <button
+              id="forward-btn"
+              class="control-btn"
+              aria-label="Forward 10 seconds"
+            >
+              <span class="material-icons-round">forward_10</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Invisible audio element for drop sound -->
+    <audio id="drop-sound" preload="auto">
+      <source
+        src="https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/drop.mp3"
+        type="audio/mpeg"
+      />
+    </audio>
+
+    <script type="module" src="/js/app.js"></script>
+  </body>
+</html>

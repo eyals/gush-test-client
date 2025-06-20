@@ -1,0 +1,220 @@
+/* Base Styles & Variables */
+:root {
+    --primary-color: #4a90e2;
+    --background-color: #000000;
+    --text-color: #ffffff;
+    --progress-color: #4a90e2;
+    --progress-bg: rgba(255, 255, 255, 0.3);
+    --control-bg: rgba(0, 0, 0, 0.5);
+    --transition-speed: 0.3s;
+    --gradient-start: #FD9E59;
+    --gradient-end: #F24176;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html, body, #app {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Instrument Sans', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    touch-action: pan-y;
+}
+
+/* Initial Mode */
+.initial-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  z-index: 1000;
+  transition: transform 0.5s ease-in-out;
+  will-change: transform;
+}
+
+.initial-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.initial-logo {
+  width: 180px;
+  height: auto;
+  margin-bottom: 40px;
+  opacity: 0.9;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
+}
+
+.swipe-hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.9);
+  animation: float 2s ease-in-out infinite;
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.swipe-hint .material-icons-round {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.swipe-hint p {
+  font-size: 18px;
+  font-weight: 500;
+  margin: 0;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+/* Stories Container */
+.stories-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Player Controls */
+.player-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 20px 16px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+    z-index: 100;
+}
+
+.progress-container {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 4px;
+    background-color: var(--progress-bg);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background-color: var(--progress-color);
+    transition: width 0.1s linear;
+}
+
+.controls-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.control-btn:active {
+    transform: scale(0.9);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.control-btn .material-icons-round {
+    font-size: 32px;
+}
+
+.play-pause {
+    width: 64px;
+    height: 64px;
+    background-color: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.play-pause .material-icons-round {
+    font-size: 40px;
+}
+
+/* Story Styles */
+.story {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+.story-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* PWA Styles */
+@media all and (display-mode: standalone) {
+    body {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+    }
+    
+    .player-controls {
+        padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+}
