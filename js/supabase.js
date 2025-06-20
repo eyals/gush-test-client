@@ -55,12 +55,11 @@ function shuffleArray(array) {
 // Helper function to fetch stories
 export async function fetchStories() {
   try {
-    // If supabase client isn't initialized, return empty array
+    // If supabase client isn't initialized, throw error
     if (!supabase) {
-      console.warn('Supabase client not initialized - returning empty stories array');
-      return [];
+      throw new Error('Supabase client not initialized - check your environment variables');
     }
-
+    
     const { data, error } = await supabase
       .from('stories')
       .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url)')
@@ -69,31 +68,34 @@ export async function fetchStories() {
       .limit(50);
 
     if (error) {
-      console.error('Supabase query error:', error);
+      throw error;
+    }
+    
+    if (!data || !data.length) {
       return [];
     }
-    if (!data || !data.length) return [];
 
     // Transform the data to match your existing format
-    const transformedStories = data.map(story => ({
-      id: story.id,
-      title: story.title,
-      // Generate a random duration between 30 and 300 seconds (5 minutes)
-      duration: Math.floor(Math.random() * 270) + 30,
-      ttsAudioUrl: story.ttsAudioUrl,
-      shows: story.shows ? {
-        name: story.shows.name || '',
-        image_url: story.shows.image_url || ''
-      } : { name: '', image_url: '' },
-      likes: [{
-        count: getRandomLikeCount()
-      }]
-    }));
+    const transformedStories = data.map(story => {
+      return {
+        id: story.id,
+        title: story.title,
+        // Generate a random duration between 30 and 300 seconds (5 minutes)
+        duration: Math.floor(Math.random() * 270) + 30,
+        ttsAudioUrl: story.ttsAudioUrl,
+        shows: story.shows ? {
+          name: story.shows.name || '',
+          image_url: story.shows.image_url || ''
+        } : { name: '', image_url: '' },
+        likes: [{
+          count: getRandomLikeCount()
+        }]
+      };
+    });
 
     // Return shuffled array of stories
     return shuffleArray(transformedStories);
   } catch (error) {
-    console.error('Error fetching stories:', error);
-    return [];
+    throw error; // Re-throw to allow handling in the calling function
   }
 }

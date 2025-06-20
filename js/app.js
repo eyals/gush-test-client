@@ -5,8 +5,6 @@ import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
   constructor() {
-    console.log('Initializing MusedropsPlayer...');
-    
     // Initialize state first
     this.isInitialized = false;
     this.isTransitioning = false;
@@ -177,39 +175,42 @@ class MusedropsPlayer {
 
   async loadStories() {
     try {
-      // Show loading state
-      console.log('Loading stories...');
-      
       // Try to fetch from Supabase first
       let stories = [];
+      let errorMessage = '';
       
       try {
         stories = await fetchStories();
       } catch (error) {
-        console.warn('Error fetching stories from Supabase:', error);
+        errorMessage = error.message || 'Unknown error';
       }
       
       // If we got stories from Supabase, use them
       if (stories && stories.length > 0) {
-        console.log('Loaded', stories.length, 'stories from Supabase');
         this.stories = stories;
       } else {
         // If no stories from Supabase, use mock data
-        console.warn('No stories from Supabase, falling back to mock data');
+        this.showError('No stories from Supabase. Using demo content.');
         this.stories = mockStories;
       }
       
       // Make sure we have at least one story
       if (!this.stories || this.stories.length === 0) {
-        throw new Error('No stories available');
+        this.showError('No stories available');
+        throw new Error('No stories available from any source');
       }
+      
     } catch (error) {
       // If there's any error, use mock data
-      console.warn('Error fetching stories, using mock data:', error);
+      this.showError('Loading stories. Using demo content.');
       this.stories = mockStories;
     } finally {
       // Always render whatever stories we have
-      this.renderStories();
+      try {
+        this.renderStories();
+      } catch (renderError) {
+        this.showError('Failed to load stories');
+      }
     }
   }
 
