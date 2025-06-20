@@ -7,6 +7,20 @@ class MusedropsPlayer {
   constructor() {
     console.log('Initializing MusedropsPlayer...');
     
+    // Initialize state first
+    this.isInitialized = false;
+    this.isTransitioning = false;
+    this.touchStartX = null;
+    this.stories = [];
+    this.currentStoryIndex = 0;
+    this.isPlaying = false;
+    this.progressInterval = null;
+    this.hasInteracted = false;
+    
+    // Initialize audio
+    this.audio = new Audio();
+    this.dropSound = document.getElementById("drop-sound");
+    
     // Wait for DOM to be fully loaded
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', () => this.initialize());
@@ -25,6 +39,16 @@ class MusedropsPlayer {
       this.storiesContainer = document.getElementById("stories-container");
       this.playIndicator = document.querySelector(".play-indicator");
       
+      // Player elements
+      this.progressFill = document.querySelector(".progress-fill");
+      this.progressTimes = document.querySelectorAll(".progress-time");
+      
+      // Buttons
+      this.rewindBtn = document.getElementById("rewind-btn");
+      this.forwardBtn = document.getElementById("forward-btn");
+      this.likeBtn = document.querySelector(".like-btn");
+      this.likeCount = document.querySelector(".like-count");
+      
       // Check for required elements
       if (!this.initialMode || !this.playerView || !this.storiesContainer) {
         throw new Error('Required elements not found in DOM');
@@ -34,48 +58,16 @@ class MusedropsPlayer {
                           navigator.maxTouchPoints > 0 || 
                           navigator.msMaxTouchPoints > 0;
       
-      // Initialize state
-      this.isTransitioning = false;
-      this.touchStartX = null;
-      this.stories = [];
-      this.currentStoryIndex = 0;
-      this.isPlaying = false;
-      this.progressInterval = null;
-      this.hasInteracted = false;
-      
       // Initialize the app
       this.initializeEventListeners();
       this.loadStories();
       
+      this.isInitialized = true;
       console.log('MusedropsPlayer initialized successfully');
     } catch (error) {
       console.error('Failed to initialize MusedropsPlayer:', error);
-      // Show error to user
       this.showError('Failed to initialize player. Please refresh the page.');
     }
-
-    // Player elements
-    this.progressFill = document.querySelector(".progress-fill");
-    this.progressTimes = document.querySelectorAll(".progress-time");
-
-    // Buttons
-    this.rewindBtn = document.getElementById("rewind-btn");
-    this.forwardBtn = document.getElementById("forward-btn");
-
-    this.likeBtn = document.querySelector(".like-btn");
-    this.likeCount = document.querySelector(".like-count");
-
-    // Audio
-    this.audio = new Audio();
-    this.dropSound = document.getElementById("drop-sound");
-
-    // State
-    this.stories = [];
-    this.currentStoryIndex = 0;
-    this.isPlaying = false;
-    this.progressInterval = null;
-    this.hasInteracted = false;
-    this.touchStartY = 0;
   }
 
   initializeAudio() {
@@ -342,13 +334,9 @@ class MusedropsPlayer {
     } finally {
       this.isTransitioning = false;
     }
-
-    // Show the player
-    this.playerView.classList.remove("hidden");
-    this.showStory(0, false);
   }
 
-  showStory(index, autoPlay = false) {
+  async showStory(index, autoPlay = false) {
     if (index < 0 || index >= this.stories.length) return;
 
     this.currentStoryIndex = index;
@@ -370,24 +358,35 @@ class MusedropsPlayer {
 
     // Handle audio loading
     if (this.audio) {
-      // If we're autoplaying, we want the state to remain "playing".
-      // so we don't call the full pause() method which sets isPlaying = false.
-      if (!autoPlay) {
-        this.pause();
-      } else {
-        this.audio.pause(); // just pause the element
-        this.stopProgressTracking(); // and stop the old timer
+      // Pause current audio if playing
+      if (this.audio.src) {
+        this.audio.pause();
+        this.stopProgressTracking();
       }
 
       // Set new audio source
       this.audio.src = currentStory.ttsAudioUrl;
-      this.audio.load();
+      
+      try {
+        // Load the new audio
+        await new Promise((resolve, reject) => {
+          this.audio.oncanplay = resolve;
+          this.audio.onerror = reject;
+          this.audio.load();
+        });
 
-      if (autoPlay) {
-        this.play(); // this will set isPlaying=true and start the new timer
+        // If autoplay is requested, start playing
+        if (autoPlay) {
+          await this.play();
+        } else {
+          this.updatePlayIndicator(true);
+        }
+      } catch (error) {
+        console.error('Error loading audio:', error);
+        this.showError('Error loading audio');
+        this.updatePlayIndicator(true);
       }
     }
-    this.updatePlayIndicator(!autoPlay);
   }
 
   updatePlayIndicator(isPaused) {
