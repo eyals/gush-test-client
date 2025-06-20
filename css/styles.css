@@ -164,6 +164,55 @@ html, body, #app {
 
 .story-info, .player-controls {
   pointer-events: auto; /* Re-enable pointer events on interactive areas */
+  width: 100%;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.progress-bar-wrapper {
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex-grow: 1;
+  height: 4px;
+  background-color: var(--progress-bg);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: var(--progress-color);
+  border-radius: 2px;
+}
+
+.progress-time {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.8;
+  min-width: 35px;
+  text-align: center;
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.control-btn .material-icons-round {
+  font-size: 32px;
 }
 
 .story-info {

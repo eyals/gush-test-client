@@ -15,7 +15,7 @@ class MusedropsPlayer {
     // Buttons
     this.rewindBtn = document.getElementById('rewind-btn');
     this.forwardBtn = document.getElementById('forward-btn');
-    this.playPauseBtn = document.getElementById('play-pause-btn');
+
     this.likeBtn = document.querySelector('.like-btn');
     this.likeCount = document.querySelector('.like-count');
     
@@ -110,12 +110,7 @@ class MusedropsPlayer {
         this.skipForward();
       });
     }
-    if (this.playPauseBtn) {
-      this.playPauseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.togglePlayPause();
-      });
-    }
+
   }
 
   handleStartButtonClick(e) {
