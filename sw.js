@@ -2,15 +2,15 @@
 
 const CACHE_NAME = "musedrops-v2";
 const ASSETS_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/css/styles.css",
-  "/js/app.js",
-  "/js/mock-stories.js",
-  "/icon-192.png",
-  "/favicon.ico",
+  "./",
+  "./index.html",
+  "./css/styles.css",
+  "./js/app.js",
+  "./js/mock-stories.js",
+  "./icon-192.png",
+  "./favicon.ico",
   "https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap",
-  "https://fonts.googleapis.com/icon?family=Material+Icons+Round"
+  "https://fonts.googleapis.com/icon?family=Material+Icons+Round",
 ];
 
 // Install event - cache all static assets

@@ -13,7 +13,7 @@
     />
     <meta name="theme-color" content="#000000" />
     <meta name="mobile-web-app-capable" content="yes" />
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="./manifest.json" />
     <link
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
@@ -22,7 +22,7 @@
       href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="./css/styles.css" />
     <title>Musedrops</title>
   </head>
   <body>
@@ -52,8 +52,12 @@
             <div class="story-series"></div>
             <h1 class="story-title"></h1>
             <div class="action-buttons">
-              <button class="action-btn" aria-label="Bookmark"><span class="material-icons-round">bookmark_border</span></button>
-              <button class="action-btn" aria-label="Share"><span class="material-icons-round">ios_share</span></button>
+              <button class="action-btn" aria-label="Bookmark">
+                <span class="material-icons-round">bookmark_border</span>
+              </button>
+              <button class="action-btn" aria-label="Share">
+                <span class="material-icons-round">ios_share</span>
+              </button>
               <button class="action-btn like-btn" aria-label="Like">
                 <span class="material-icons-round">favorite_border</span>
                 <span class="like-count">0</span>
@@ -62,12 +66,18 @@
           </div>
 
           <div class="play-indicator hidden">
-          <span class="material-icons-round">play_circle_filled</span>
-        </div>
+            <span class="material-icons-round">play_circle_filled</span>
+          </div>
 
-        <div class="player-controls">
+          <div class="player-controls">
             <div class="progress-container">
-              <button id="rewind-btn" class="control-btn" aria-label="Rewind 10 seconds"><span class="material-icons-round">undo</span></button>
+              <button
+                id="rewind-btn"
+                class="control-btn"
+                aria-label="Rewind 10 seconds"
+              >
+                <span class="material-icons-round">undo</span>
+              </button>
               <div class="progress-bar-wrapper">
                 <span class="progress-time">0:00</span>
                 <div class="progress-bar">
@@ -75,7 +85,13 @@
                 </div>
                 <span class="progress-time">0:00</span>
               </div>
-              <button id="forward-btn" class="control-btn" aria-label="Forward 10 seconds"><span class="material-icons-round">redo</span></button>
+              <button
+                id="forward-btn"
+                class="control-btn"
+                aria-label="Forward 10 seconds"
+              >
+                <span class="material-icons-round">redo</span>
+              </button>
             </div>
           </div>
         </div>
@@ -90,6 +106,6 @@
       />
     </audio>
 
-    <script type="module" src="/js/app.js"></script>
+    <script type="module" src="./js/app.js"></script>
   </body>
 </html>
