@@ -115,7 +115,12 @@ class MusedropsPlayer {
 
       this.audio.addEventListener('ended', this.handleStoryEnd.bind(this));
       this.audio.addEventListener('play', () => this.updatePlayIndicator(false));
-      this.audio.addEventListener('pause', () => this.updatePlayIndicator(true));
+      this.audio.addEventListener('pause', () => {
+        // Don't show play indicator if audio ended naturally
+        if (!this.audio.ended) {
+          this.updatePlayIndicator(true);
+        }
+      });
     }
 
     // Player controls
