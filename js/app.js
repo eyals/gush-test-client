@@ -186,6 +186,15 @@ class MusedropsPlayer {
     this.updatePlayIndicator(!autoPlay);
   }
   
+  updatePlayIndicator(isPaused) {
+    if (!this.playIndicator) return;
+    if (isPaused) {
+      this.playIndicator.classList.remove('hidden');
+    } else {
+      this.playIndicator.classList.add('hidden');
+    }
+  }
+  
   updateStoryInfo(story) {
     if (!story) return;
     
@@ -309,14 +318,7 @@ class MusedropsPlayer {
       }, 2000);
     }, 500);
   }
-  updatePlayIndicator(isPaused) {
-    if (!this.playIndicator) return;
-    if (isPaused) {
-      this.playIndicator.classList.add('visible');
-    } else {
-      this.playIndicator.classList.remove('visible');
-    }
-  }
+
 } // End of MusedropsPlayer class
 
 // Initialize the app when DOM is loaded

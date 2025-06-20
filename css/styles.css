@@ -141,8 +141,30 @@ body,
   transition: opacity 0.3s ease;
 }
 
-.play-indicator.visible {
+.play-indicator.hidden {
+  opacity: 0;
+}
+
+.play-indicator .material-icons-round {
+  font-size: 150px;
+  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Play Indicator */
+.play-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  pointer-events: none;
+  z-index: 25;
   opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.play-indicator.hidden {
+  opacity: 0;
 }
 
 .play-indicator .material-icons-round {
