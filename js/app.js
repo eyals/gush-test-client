@@ -7,6 +7,7 @@ class MusedropsPlayer {
     this.initialMode = document.getElementById('initial-mode');
     this.playerView = document.getElementById('player-view');
     this.storiesContainer = document.getElementById('stories-container');
+    this.playIndicator = document.querySelector('.play-indicator');
     
     // Player elements
     this.progressFill = document.querySelector('.progress-fill');
@@ -65,6 +66,14 @@ class MusedropsPlayer {
     return storyEl;
   }
 
+  handlePlayerClick(e) {
+    // We want to toggle play/pause unless the user is clicking on a button
+    if (e.target.closest('.control-btn, .action-btn')) {
+      return;
+    }
+    this.togglePlayPause();
+  }
+
   initEventListeners() {
     // Click anywhere on initial mode to start
     if (this.initialMode) {
@@ -82,19 +91,10 @@ class MusedropsPlayer {
 
     // Click anywhere on player to toggle play/pause
     if (this.playerView) {
-      console.log('Adding click listener to playerView');
-      this.playerView.addEventListener('click', (e) => {
-        console.log('Player view clicked', e.target);
-        
-        // Check if click is on a button or interactive element
-        if (e.target.closest('button, a, [role="button"], [contenteditable]')) {
-          console.log('Click on interactive element, ignoring');
-          return;
-        }
-        
-        console.log('Toggling play/pause');
-        this.togglePlayPause();
-      }, true); // Use capture phase to ensure we catch the event
+      this.playerView.addEventListener('click', this.handlePlayerClick.bind(this));
+      this.audio.addEventListener('ended', this.handleStoryEnd.bind(this));
+      this.audio.addEventListener('play', () => this.updatePlayIndicator(false));
+      this.audio.addEventListener('pause', () => this.updatePlayIndicator(true));
     }
 
     // Player controls
@@ -117,13 +117,12 @@ class MusedropsPlayer {
     if (this.hasInteracted) return;
     this.hasInteracted = true;
     
-    // Add animation class
     this.initialMode.classList.add('exiting');
     
-    // Show player after animation
     setTimeout(() => {
       this.initialMode.remove();
       this.showPlayer();
+      this.play(); // Autoplay the first story
     }, 500);
     
     if (e) {
@@ -139,35 +138,14 @@ class MusedropsPlayer {
       return;
     }
     
-    // Show the player view
     this.playerView.classList.remove('hidden');
-    
-    // Show the first story but don't auto-play yet
     this.showStory(0, false);
-    
-    // Add animation to initial mode
-    if (this.initialMode) {
-      console.log('Hiding initial mode');
-      this.initialMode.style.transform = 'translateY(-100%)';
-      this.initialMode.style.transition = 'transform 0.5s ease-in-out';
-      
-      // Remove initial mode from DOM after animation and start playback
-      setTimeout(() => {
-        if (this.initialMode && this.initialMode.parentNode) {
-          this.initialMode.parentNode.removeChild(this.initialMode);
-          console.log('Initial mode removed from DOM');
-          
-          // Now that initial mode is dismissed, start playback
-          this.playCurrentStory();
-        }
-      }, 500);
-    }
   }
 
   showStory(index, autoPlay = false) {
     if (index < 0 || index >= this.stories.length) return;
     
-    console.log('Showing story at index:', index, 'autoPlay:', autoPlay);
+
     this.currentStoryIndex = index;
     const currentStory = this.stories[index];
     this.currentStory = currentStory;
@@ -200,11 +178,12 @@ class MusedropsPlayer {
         
         if (playPromise !== undefined) {
           playPromise.catch(error => {
-            console.log('Autoplay prevented, will wait for user interaction');
+            // Autoplay was prevented.
           });
         }
       }
     }
+    this.updatePlayIndicator(!autoPlay);
   }
   
   updateStoryInfo(story) {
@@ -252,36 +231,13 @@ class MusedropsPlayer {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
-  playCurrentStory() {
-    const currentStory = this.stories[this.currentStoryIndex];
-    if (!currentStory) return;
 
-    // Only set up new audio if needed
-    if (!this.audio || this.audio.src !== currentStory.ttsAudioUrl) {
-      this.audio = new Audio(currentStory.ttsAudioUrl);
-      this.audio.preload = "auto";
-      
-      this.audio.oncanplay = () => {
-        this.play();
-      };
-
-      this.audio.onended = () => this.handleStoryEnd();
-      this.audio.onerror = (error) => {
-        console.error("Audio error:", error);
-        this.handleStoryEnd();
-      };
-    } else {
-      // If audio is already loaded, just play it
-      this.play();
-    }
-  }
 
   play() {
     if (!this.audio) return;
     
     this.audio.play().then(() => {
       this.isPlaying = true;
-      this.updatePlayPauseButton();
       this.startProgressTracking();
     }).catch(error => {
       console.error("Error playing audio:", error);
@@ -293,17 +249,13 @@ class MusedropsPlayer {
     
     this.audio.pause();
     this.isPlaying = false;
-    this.updatePlayPauseButton();
     this.stopProgressTracking();
   }
 
   togglePlayPause() {
-    console.log('togglePlayPause called. Current state:', this.isPlaying ? 'playing' : 'paused');
     if (this.isPlaying) {
-      console.log('Pausing playback');
       this.pause();
     } else {
-      console.log('Starting playback');
       this.play();
     }
   }
@@ -325,23 +277,16 @@ class MusedropsPlayer {
     }
   }
 
-  updatePlayPauseButton() {
-    if (!this.playPauseBtn) return;
-    
-    const icon = this.playPauseBtn.querySelector('.material-icons-round');
-    if (!icon) return;
-    
-    icon.textContent = this.isPlaying ? 'pause_circle' : 'play_circle';
-  }
+
 
   skipForward() {
-    const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
-    this.showStory(nextIndex);
+    if (!this.audio) return;
+    this.audio.currentTime = Math.min(this.audio.duration, this.audio.currentTime + 10);
   }
 
   skipBackward() {
-    const prevIndex = (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
-    this.showStory(prevIndex);
+    if (!this.audio) return;
+    this.audio.currentTime = Math.max(0, this.audio.currentTime - 10);
   }
 
   setVolume(volume) {
@@ -357,11 +302,20 @@ class MusedropsPlayer {
         this.dropSound.play().catch(e => console.error('Error playing drop sound:', e));
       }
       
-      // Skip to next story after 2.5s total (500ms + 2000ms)
+      // Go to the next story after 2.5s total (500ms + 2000ms)
       setTimeout(() => {
-        this.skipForward();
+        const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
+        this.showStory(nextIndex, true);
       }, 2000);
     }, 500);
+  }
+  updatePlayIndicator(isPaused) {
+    if (!this.playIndicator) return;
+    if (isPaused) {
+      this.playIndicator.classList.add('visible');
+    } else {
+      this.playIndicator.classList.remove('visible');
+    }
   }
 } // End of MusedropsPlayer class
 
