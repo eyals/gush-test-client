@@ -27,7 +27,7 @@
   </head>
   <body>
     <div id="app">
-      <!-- Initial mode with gradient background -->
+      <!-- Initial mode with gradient background - click anywhere to start -->
       <div id="initial-mode" class="initial-mode">
         <div class="initial-content">
           <img
@@ -35,50 +35,45 @@
             alt="Musedrops"
             class="initial-logo"
           />
-          <div class="swipe-hint">
-            <span class="material-icons-round">swipe_up</span>
-            <p>Swipe to start listening</p>
+          <div class="start-hint">
+            <span class="start-hint-text">Tap anywhere to start</span>
           </div>
         </div>
       </div>
 
       <!-- Main player view (initially hidden) -->
       <div id="player-view" class="hidden">
-        <div id="stories-container" class="stories-container">
-          <!-- Stories will be inserted here by JavaScript -->
+        <div id="stories-container">
+          <!-- Stories will be injected here by JS -->
         </div>
 
-        <!-- Player controls overlay -->
-        <div class="player-controls">
-          <div class="progress-container">
-            <div class="progress-bar">
-              <div class="progress-fill"></div>
+        <div class="player-overlay">
+          <div class="story-info">
+            <div class="story-series"></div>
+            <h1 class="story-title"></h1>
+            <div class="action-buttons">
+              <button class="action-btn" aria-label="Bookmark"><span class="material-icons-round">bookmark_border</span></button>
+              <button class="action-btn" aria-label="Share"><span class="material-icons-round">ios_share</span></button>
+              <button class="action-btn like-btn" aria-label="Like">
+                <span class="material-icons-round">favorite_border</span>
+                <span class="like-count">0</span>
+              </button>
             </div>
           </div>
 
-          <div class="controls-row">
-            <button
-              id="rewind-btn"
-              class="control-btn"
-              aria-label="Rewind 10 seconds"
-            >
-              <span class="material-icons-round">replay_10</span>
-            </button>
-            <button
-              id="play-pause-btn"
-              class="control-btn play-pause"
-              aria-label="Play/Pause"
-            >
-              <span class="material-icons-round play-icon">play_arrow</span>
-              <span class="material-icons-round pause-icon hidden">pause</span>
-            </button>
-            <button
-              id="forward-btn"
-              class="control-btn"
-              aria-label="Forward 10 seconds"
-            >
-              <span class="material-icons-round">forward_10</span>
-            </button>
+          <div class="player-controls">
+            <div class="progress-container">
+              <span class="progress-time">0:00</span>
+              <div class="progress-bar">
+                <div class="progress-fill"></div>
+              </div>
+              <span class="progress-time">0:00</span>
+            </div>
+            <div class="controls-row">
+              <button id="rewind-btn" class="control-btn" aria-label="Rewind 10 seconds"><span class="material-icons-round">replay_10</span></button>
+              <button id="play-pause-btn" class="control-btn" aria-label="Play/Pause"><span class="material-icons-round">play_circle</span></button>
+              <button id="forward-btn" class="control-btn" aria-label="Forward 10 seconds"><span class="material-icons-round">forward_10</span></button>
+            </div>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@
 - [Mock: Card Layout](https://www.figma.com/design/xyf8RM1uSJaN4uMlGiUnrB/Gush?node-id=727-4189&t=6oKkXXlrgrXBKRae-4)
 - This main page is a vertical scroll of stories, similar to TikTok, but for audio.
 - Each story is a card that contains an image and details about the story.
+  - Between the image, which covers the screen, and the elements above it, there's a 20% transparent black layer.
 - Users can swipe to switch between stories. When tehy stop the swipe, it will snap to the next story in full screen.
 - [Mock: Scrolling between stories](https://www.figma.com/design/xyf8RM1uSJaN4uMlGiUnrB/Gush?node-id=727-4264&t=6oKkXXlrgrXBKRae-4)
 
