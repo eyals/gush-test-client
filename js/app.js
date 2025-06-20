@@ -8,6 +8,10 @@ class MusedropsPlayer {
     this.playerView = document.getElementById("player-view");
     this.storiesContainer = document.getElementById("stories-container");
     this.playIndicator = document.querySelector(".play-indicator");
+    this.isTouchDevice =
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0;
 
     // Player elements
     this.progressFill = document.querySelector(".progress-fill");
@@ -112,17 +116,26 @@ class MusedropsPlayer {
     // Click anywhere on player to toggle play/pause
     if (this.playerView) {
       // Touch events
-      //this.playerView.addEventListener('touchstart', this.handleGestureStart.bind(this), { passive: true });
-      //this.playerView.addEventListener('touchend', this.handleGestureEnd.bind(this));
-      // Mouse events
       this.playerView.addEventListener(
-        "mousedown",
-        this.handleGestureStart.bind(this)
+        "touchstart",
+        this.handleGestureStart.bind(this),
+        { passive: true }
       );
       this.playerView.addEventListener(
-        "mouseup",
+        "touchend",
         this.handleGestureEnd.bind(this)
       );
+      // Mouse events
+      if (!this.isTouchDevice) {
+        this.playerView.addEventListener(
+          "mousedown",
+          this.handleGestureStart.bind(this)
+        );
+        this.playerView.addEventListener(
+          "mouseup",
+          this.handleGestureEnd.bind(this)
+        );
+      }
 
       this.audio.addEventListener("ended", this.handleStoryEnd.bind(this));
       this.audio.addEventListener("play", () =>
