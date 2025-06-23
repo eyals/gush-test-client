@@ -58,6 +58,7 @@ class MusedropsPlayer {
       
       // Initialize the app
       this.initializeEventListeners();
+      this.initializeAudio();
       this.loadStories();
       
       this.isInitialized = true;
@@ -70,6 +71,28 @@ class MusedropsPlayer {
 
   initializeAudio() {
     // Audio initialization
+    this.initializeMediaSession();
+  }
+
+  initializeMediaSession() {
+    if ('mediaSession' in navigator) {
+      // Set up action handlers for bluetooth/media controls
+      navigator.mediaSession.setActionHandler('play', () => {
+        this.play();
+      });
+
+      navigator.mediaSession.setActionHandler('pause', () => {
+        this.pause();
+      });
+
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        this.nextStory();
+      });
+
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        this.previousStory();
+      });
+    }
   }
 
   showError(message) {
@@ -419,6 +442,28 @@ class MusedropsPlayer {
     }
 
     this.updateProgress(0, story.duration || 0);
+    
+    // Update media session metadata for bluetooth controls
+    this.updateMediaSessionMetadata(story);
+  }
+
+  updateMediaSessionMetadata(story) {
+    if ('mediaSession' in navigator && story) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: story.title,
+          artist: 'Musedrops',
+          album: story.shows.name || 'Musedrops Stories',
+          artwork: story.shows.image_url ? [{
+            src: story.shows.image_url,
+            sizes: '512x512',
+            type: 'image/jpeg'
+          }] : []
+        });
+      } catch (error) {
+        console.error('Error setting media session metadata:', error);
+      }
+    }
   }
 
   updateProgress(currentTime, duration) {
