@@ -61,7 +61,7 @@ export async function fetchStories() {
     
     const { data, error } = await supabase
       .from('stories')
-      .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url)')
+      .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url, music_url)')
       .not('ttsAudioUrl', 'is', 'null')
       .order('updatedAt', { ascending: false })
       .limit(50);
@@ -84,8 +84,9 @@ export async function fetchStories() {
         ttsAudioUrl: story.ttsAudioUrl,
         shows: story.shows ? {
           name: story.shows.name || '',
-          image_url: story.shows.image_url || ''
-        } : { name: '', image_url: '' },
+          image_url: story.shows.image_url || '',
+          music_url: story.shows.music_url || null
+        } : { name: '', image_url: '', music_url: null },
         likes: [{
           count: getRandomLikeCount()
         }]
