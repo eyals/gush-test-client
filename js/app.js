@@ -477,6 +477,7 @@ class MusedropsPlayer {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
           artist: `Musedrops - ${showName}`,
+          album: showName,
           artwork: story.shows.image_url ? [
             {
               src: this.transformImageUrl(story.shows.image_url, 'smallThumb'),
@@ -490,6 +491,14 @@ class MusedropsPlayer {
             }
           ] : []
         });
+        
+        // Set duration explicitly for Samsung compatibility
+        if (this.audio && this.audio.duration > 0) {
+          navigator.mediaSession.metadata = new MediaMetadata({
+            ...navigator.mediaSession.metadata,
+            duration: this.audio.duration
+          });
+        }
       } catch (error) {
         console.error('Error setting media session metadata:', error);
       }
@@ -512,11 +521,12 @@ class MusedropsPlayer {
   updateMediaSessionPositionState() {
     if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
       try {
-        if (this.audio && this.audio.duration > 0) {
+        if (this.audio && this.audio.duration > 0 && !isNaN(this.audio.duration)) {
+          const position = Math.min(this.audio.currentTime || 0, this.audio.duration);
           navigator.mediaSession.setPositionState({
             duration: this.audio.duration,
-            playbackRate: this.audio.playbackRate,
-            position: this.audio.currentTime
+            playbackRate: this.audio.playbackRate || 1.0,
+            position: Math.max(0, position)
           });
         }
       } catch (error) {
@@ -568,6 +578,19 @@ class MusedropsPlayer {
     this.audio.pause();
     this.isPlaying = false;
     this.stopProgressTracking();
+    
+    // Clear position state on Samsung devices to prevent stuck progress
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      try {
+        navigator.mediaSession.setPositionState({
+          duration: this.audio.duration || 0,
+          playbackRate: 0,
+          position: this.audio.currentTime || 0
+        });
+      } catch (error) {
+        console.error('Error clearing position state on pause:', error);
+      }
+    }
   }
 
   togglePlayPause() {
