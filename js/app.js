@@ -85,6 +85,7 @@ class MusedropsPlayer {
     // Initialize audio
     this.audio = new Audio();
     this.dropSound = document.getElementById("drop-sound");
+    this.backgroundMusic = document.getElementById("background-music");
     
     // Wait for DOM to be fully loaded
     if (document.readyState === 'loading') {
@@ -139,6 +140,27 @@ class MusedropsPlayer {
   initializeAudio() {
     // Audio initialization
     this.initializeMediaSession();
+    this.initializeBackgroundMusic();
+  }
+
+  initializeBackgroundMusic() {
+    if (this.backgroundMusic) {
+      // Set volume to 50% as specified
+      this.backgroundMusic.volume = 0.5;
+      
+      // Add event listeners for background music
+      this.backgroundMusic.addEventListener('ended', () => {
+        // This shouldn't fire due to loop attribute, but just in case
+        if (this.backgroundMusic.src) {
+          this.backgroundMusic.currentTime = 0;
+          this.backgroundMusic.play().catch(e => console.error('Error restarting background music:', e));
+        }
+      });
+      
+      this.backgroundMusic.addEventListener('error', (e) => {
+        console.error('Background music error:', e);
+      });
+    }
   }
 
   initializeMediaSession() {
@@ -448,6 +470,9 @@ class MusedropsPlayer {
     // Update story info in the UI
     this.updateStoryInfo(currentStory);
 
+    // Handle background music
+    this.loadBackgroundMusic(currentStory);
+
     // Handle audio loading
     if (this.audio) {
       // Pause current audio if playing
@@ -612,8 +637,61 @@ class MusedropsPlayer {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   }
 
-  play() {
+  loadBackgroundMusic(story) {
+    if (!this.backgroundMusic || !story.shows.music_url) {
+      // Stop background music if no music_url
+      this.stopBackgroundMusic();
+      return;
+    }
+
+    // If the music source is the same as current, don't reload
+    if (this.backgroundMusic.src === story.shows.music_url) {
+      return;
+    }
+
+    // Stop current background music
+    this.stopBackgroundMusic();
+
+    // Load new background music
+    this.backgroundMusic.src = story.shows.music_url;
+    this.backgroundMusic.load();
+  }
+
+  startBackgroundMusic() {
+    if (this.backgroundMusic && this.backgroundMusic.src) {
+      this.backgroundMusic.play().catch(e => {
+        console.error('Error starting background music:', e);
+      });
+    }
+  }
+
+  pauseBackgroundMusic() {
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+    }
+  }
+
+  stopBackgroundMusic() {
+    if (this.backgroundMusic) {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.currentTime = 0;
+      this.backgroundMusic.src = '';
+    }
+  }
+
+  async play() {
     if (!this.audio) return;
+
+    // Start background music first if available
+    if (this.currentStory && this.currentStory.shows.music_url) {
+      this.startBackgroundMusic();
+      
+      // Only wait 2 seconds on initial play, not on resume
+      if (this.audio.currentTime === 0) {
+        // Wait 2 seconds before starting TTS as specified (only for new stories)
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
 
     this.audio
       .play()
@@ -630,6 +708,7 @@ class MusedropsPlayer {
     if (!this.audio) return;
 
     this.audio.pause();
+    this.pauseBackgroundMusic();
     this.isPlaying = false;
     this.stopProgressTracking();
     
@@ -703,11 +782,13 @@ class MusedropsPlayer {
   }
 
   nextStory() {
+    this.stopBackgroundMusic();
     const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
     this.showStory(nextIndex, true);
   }
 
   previousStory() {
+    this.stopBackgroundMusic();
     const prevIndex =
       (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
     this.showStory(prevIndex, true);
