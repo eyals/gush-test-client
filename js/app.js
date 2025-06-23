@@ -7,7 +7,7 @@ class MusedropsPlayer {
   
   // Image transformation function
   transformImageUrl(imageUrl, size = 'full') {
-    if (!imageUrl) return imageUrl;
+    if (!imageUrl) return this.getFallbackImageUrl(size);
     
     // Replace =/object/ with /render/image/
     let transformedUrl = imageUrl.replace('=/object/', '/render/image/');
@@ -22,6 +22,53 @@ class MusedropsPlayer {
     }
     
     return transformedUrl;
+  }
+
+  // Get fallback image URL with same transformation parameters
+  getFallbackImageUrl(size = 'full') {
+    const baseUrl = 'https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/default-show-image.png';
+    let fallbackUrl = baseUrl.replace('=/object/', '/render/image/');
+    
+    // Add same transformation parameters as regular images
+    if (size === 'full') {
+      fallbackUrl += '?resize=contain&quality=50&width=500';
+    } else if (size === 'smallThumb') {
+      fallbackUrl += '?resize=cover&quality=50&width=192&height=192';
+    } else if (size === 'largeThumb') {
+      fallbackUrl += '?resize=cover&quality=50&width=512&height=512';
+    }
+    
+    return fallbackUrl;
+  }
+
+  // Set background image with fallback handling
+  setImageWithFallback(element, imageUrl, size = 'full') {
+    if (!element) return;
+    
+    // If no image URL provided, use fallback immediately
+    if (!imageUrl) {
+      const fallbackUrl = this.getFallbackImageUrl(size);
+      element.style.backgroundImage = `url(${fallbackUrl})`;
+      return;
+    }
+    
+    // Try to load the original image first
+    const transformedUrl = this.transformImageUrl(imageUrl, size);
+    const img = new Image();
+    
+    img.onload = () => {
+      // Image loaded successfully, set it as background
+      element.style.backgroundImage = `url(${transformedUrl})`;
+    };
+    
+    img.onerror = () => {
+      // Image failed to load, use fallback
+      const fallbackUrl = this.getFallbackImageUrl(size);
+      element.style.backgroundImage = `url(${fallbackUrl})`;
+    };
+    
+    // Start loading the image
+    img.src = transformedUrl;
   }
 
   constructor() {
@@ -457,11 +504,10 @@ class MusedropsPlayer {
       this.likeCount.textContent = story.likes?.[0]?.count || 0;
     }
 
-    // Update story background image
+    // Update story background image with fallback handling
     const storyEl = document.querySelector(`.story[data-id="${story.id}"]`);
-    if (storyEl && story.shows.image_url) {
-      const transformedUrl = this.transformImageUrl(story.shows.image_url, 'full');
-      storyEl.style.backgroundImage = `url(${transformedUrl})`;
+    if (storyEl) {
+      this.setImageWithFallback(storyEl, story.shows.image_url, 'full');
     }
 
     this.updateProgress(0, story.duration || 0);
@@ -474,21 +520,30 @@ class MusedropsPlayer {
     if ('mediaSession' in navigator && story) {
       try {
         const showName = story.shows.name || 'Stories';
+        
+        // Get artwork URLs with fallback support
+        const smallThumbUrl = story.shows.image_url ? 
+          this.transformImageUrl(story.shows.image_url, 'smallThumb') : 
+          this.getFallbackImageUrl('smallThumb');
+        const largeThumbUrl = story.shows.image_url ? 
+          this.transformImageUrl(story.shows.image_url, 'largeThumb') : 
+          this.getFallbackImageUrl('largeThumb');
+        
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
           artist: `Musedrops - ${showName}`,
-          artwork: story.shows.image_url ? [
+          artwork: [
             {
-              src: this.transformImageUrl(story.shows.image_url, 'smallThumb'),
+              src: smallThumbUrl,
               sizes: '192x192',
               type: 'image/jpeg'
             },
             {
-              src: this.transformImageUrl(story.shows.image_url, 'largeThumb'),
+              src: largeThumbUrl,
               sizes: '512x512',
               type: 'image/jpeg'
             }
-          ] : []
+          ]
         });
         
         // Set duration explicitly for Samsung compatibility
