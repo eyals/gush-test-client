@@ -477,7 +477,6 @@ class MusedropsPlayer {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
           artist: `Musedrops - ${showName}`,
-          album: showName,
           artwork: story.shows.image_url ? [
             {
               src: this.transformImageUrl(story.shows.image_url, 'smallThumb'),
