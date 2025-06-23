@@ -145,8 +145,8 @@ class MusedropsPlayer {
 
   initializeBackgroundMusic() {
     if (this.backgroundMusic) {
-      // Set volume to 50% as specified
-      this.backgroundMusic.volume = 0.5;
+      // Set initial volume to 60% when music starts alone
+      this.backgroundMusic.volume = 0.6;
       
       // Add event listeners for background music
       this.backgroundMusic.addEventListener('ended', () => {
@@ -727,6 +727,8 @@ class MusedropsPlayer {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
       this.backgroundMusic.src = '';
+      // Reset volume for next song
+      this.backgroundMusic.volume = 0.6;
     }
   }
 
@@ -754,6 +756,11 @@ class MusedropsPlayer {
       .play()
       .then(() => {
         console.log('TTS started successfully');
+        // Lower background music volume to 20% when TTS starts
+        if (this.backgroundMusic && !this.backgroundMusic.paused) {
+          console.log('Lowering background music volume to 20% for TTS');
+          this.backgroundMusic.volume = 0.2;
+        }
         this.isPlaying = true;
         this.startProgressTracking();
       })
@@ -767,6 +774,11 @@ class MusedropsPlayer {
 
     this.audio.pause();
     this.pauseBackgroundMusic();
+    // Restore background music volume when TTS pauses
+    if (this.backgroundMusic && this.backgroundMusic.src) {
+      console.log('Restoring background music volume to 60%');
+      this.backgroundMusic.volume = 0.6;
+    }
     this.isPlaying = false;
     this.stopProgressTracking();
     
