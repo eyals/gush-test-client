@@ -10,7 +10,7 @@ export const mockStories = [
       name: "Menopause Matters",
       image_url:
         "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/render/image/public/media/shows/song-secrets/1750366730893.png?width=500&resize=contain&quality=50",
-      music_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+      music_url: "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/drop.mp3",
     },
     likes: [{ count: 42 }],
   },
@@ -23,7 +23,7 @@ export const mockStories = [
       name: "Tiny Tales",
       image_url:
         "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/render/image/public/media/shows/paws-and-psychology/1750319500256.png?width=500&resize=contain&quality=50",
-      music_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+      music_url: "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/drop.mp3",
     },
     likes: [{ count: 28 }],
   },
@@ -36,7 +36,7 @@ export const mockStories = [
       name: "Tiny Tales",
       image_url:
         "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/render/image/public/media/shows/menopause-matters/1750190747152.png?width=500&resize=contain&quality=50",
-      music_url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+      music_url: "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/drop.mp3",
     },
     likes: [{ count: 35 }],
   },
