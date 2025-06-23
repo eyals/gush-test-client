@@ -4,6 +4,26 @@ import { fetchStories } from "./supabase.js";
 import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
+  
+  // Image transformation function
+  transformImageUrl(imageUrl, size = 'full') {
+    if (!imageUrl) return imageUrl;
+    
+    // Replace =/object/ with /render/image/
+    let transformedUrl = imageUrl.replace('=/object/', '/render/image/');
+    
+    // Add transformation parameters based on size
+    if (size === 'full') {
+      transformedUrl += '?resize=contain&quality=50&width=500';
+    } else if (size === 'smallThumb') {
+      transformedUrl += '?resize=cover&quality=50&width=192&height=192';
+    } else if (size === 'largeThumb') {
+      transformedUrl += '?resize=cover&quality=50&width=512&height=512';
+    }
+    
+    return transformedUrl;
+  }
+
   constructor() {
     // Initialize state first
     this.isInitialized = false;
@@ -440,7 +460,8 @@ class MusedropsPlayer {
     // Update story background image
     const storyEl = document.querySelector(`.story[data-id="${story.id}"]`);
     if (storyEl && story.shows.image_url) {
-      storyEl.style.backgroundImage = `url(${story.shows.image_url})`;
+      const transformedUrl = this.transformImageUrl(story.shows.image_url, 'full');
+      storyEl.style.backgroundImage = `url(${transformedUrl})`;
     }
 
     this.updateProgress(0, story.duration || 0);
@@ -456,11 +477,18 @@ class MusedropsPlayer {
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
           artist: `Musedrops - ${showName}`,
-          artwork: story.shows.image_url ? [{
-            src: story.shows.image_url,
-            sizes: '512x512',
-            type: 'image/jpeg'
-          }] : []
+          artwork: story.shows.image_url ? [
+            {
+              src: this.transformImageUrl(story.shows.image_url, 'smallThumb'),
+              sizes: '192x192',
+              type: 'image/jpeg'
+            },
+            {
+              src: this.transformImageUrl(story.shows.image_url, 'largeThumb'),
+              sizes: '512x512',
+              type: 'image/jpeg'
+            }
+          ] : []
         });
       } catch (error) {
         console.error('Error setting media session metadata:', error);
