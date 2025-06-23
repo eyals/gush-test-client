@@ -193,6 +193,8 @@ class MusedropsPlayer {
           this.updatePlayIndicator(true);
         }
       });
+      this.audio.addEventListener("timeupdate", this.handleTimeUpdate.bind(this));
+      this.audio.addEventListener("durationchange", this.handleDurationChange.bind(this));
     }
   }
 
@@ -450,10 +452,10 @@ class MusedropsPlayer {
   updateMediaSessionMetadata(story) {
     if ('mediaSession' in navigator && story) {
       try {
+        const showName = story.shows.name || 'Stories';
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
-          artist: 'Musedrops',
-          album: story.shows.name || 'Musedrops Stories',
+          artist: `Musedrops - ${showName}`,
           artwork: story.shows.image_url ? [{
             src: story.shows.image_url,
             sizes: '512x512',
@@ -462,6 +464,35 @@ class MusedropsPlayer {
         });
       } catch (error) {
         console.error('Error setting media session metadata:', error);
+      }
+    }
+  }
+
+  handleTimeUpdate() {
+    if (this.audio && this.audio.duration > 0) {
+      this.updateProgress(this.audio.currentTime, this.audio.duration);
+      this.updateMediaSessionPositionState();
+    }
+  }
+
+  handleDurationChange() {
+    if (this.audio && this.audio.duration > 0) {
+      this.updateMediaSessionPositionState();
+    }
+  }
+
+  updateMediaSessionPositionState() {
+    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+      try {
+        if (this.audio && this.audio.duration > 0) {
+          navigator.mediaSession.setPositionState({
+            duration: this.audio.duration,
+            playbackRate: this.audio.playbackRate,
+            position: this.audio.currentTime
+          });
+        }
+      } catch (error) {
+        console.error('Error setting media session position state:', error);
       }
     }
   }
@@ -520,13 +551,8 @@ class MusedropsPlayer {
   }
 
   startProgressTracking() {
-    this.stopProgressTracking();
-
-    this.progressInterval = setInterval(() => {
-      if (this.audio && this.audio.duration) {
-        this.updateProgress(this.audio.currentTime, this.audio.duration);
-      }
-    }, 1000);
+    // Progress tracking is now handled by timeupdate event listener
+    // Keep this method for compatibility but no longer use interval
   }
 
   stopProgressTracking() {
