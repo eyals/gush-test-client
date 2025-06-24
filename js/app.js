@@ -149,7 +149,7 @@ class MusedropsPlayer {
     if (this.backgroundMusic) {
       // Background music volume settings
       this.highVol = 0.6;
-      this.lowVol = 0.07;
+      this.lowVol = 0.05;
       this.fadeStepLength = 100; // 100ms
 
       // Set initial volume to 60% when music starts alone
