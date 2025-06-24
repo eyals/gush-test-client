@@ -145,8 +145,13 @@ class MusedropsPlayer {
 
   initializeBackgroundMusic() {
     if (this.backgroundMusic) {
+      // Background music volume settings
+      this.highVol = 0.6;
+      this.lowVol = 0.1;
+      this.fadeStepLength = 100; // 100ms
+      
       // Set initial volume to 60% when music starts alone
-      this.backgroundMusic.volume = 0.6;
+      this.backgroundMusic.volume = this.highVol;
       
       // Add event listeners for background music
       this.backgroundMusic.addEventListener('ended', () => {
@@ -728,7 +733,7 @@ class MusedropsPlayer {
       this.backgroundMusic.currentTime = 0;
       this.backgroundMusic.src = '';
       // Reset volume for next song
-      this.backgroundMusic.volume = 0.6;
+      this.backgroundMusic.volume = this.highVol;
     }
   }
 
@@ -741,12 +746,17 @@ class MusedropsPlayer {
     // Start background music first if available
     if (this.currentStory && this.currentStory.shows.music_url) {
       console.log('Starting background music...');
-      this.startBackgroundMusic();
+      const isResume = this.audio.currentTime > 0;
       
-      // Only wait 2 seconds on initial play, not on resume
-      if (this.audio.currentTime === 0) {
+      if (isResume) {
+        // When resuming, set to low volume and start music
+        this.backgroundMusic.volume = this.lowVol;
+        this.startBackgroundMusic();
+      } else {
+        // When starting fresh, use high volume and wait 2 seconds
+        this.backgroundMusic.volume = this.highVol;
+        this.startBackgroundMusic();
         console.log('Waiting 2 seconds before starting TTS...');
-        // Wait 2 seconds before starting TTS as specified (only for new stories)
         await new Promise(resolve => setTimeout(resolve, 2000));
         console.log('2 second delay complete, starting TTS');
       }
@@ -756,10 +766,10 @@ class MusedropsPlayer {
       .play()
       .then(() => {
         console.log('TTS started successfully');
-        // Lower background music volume to 10% when TTS starts
+        // Lower background music volume when TTS starts
         if (this.backgroundMusic && !this.backgroundMusic.paused) {
-          console.log('Lowering background music volume to 10% for TTS');
-          this.backgroundMusic.volume = 0.10;
+          console.log('Fading background music down for TTS');
+          this.fadeBackgroundMusic(this.highVol, this.lowVol, 500);
         }
         this.isPlaying = true;
         this.startProgressTracking();
@@ -774,11 +784,7 @@ class MusedropsPlayer {
 
     this.audio.pause();
     this.pauseBackgroundMusic();
-    // Restore background music volume when TTS pauses
-    if (this.backgroundMusic && this.backgroundMusic.src) {
-      console.log('Restoring background music volume to 60%');
-      this.backgroundMusic.volume = 0.6;
-    }
+    // No need to fade volume when pausing since music is stopped
     this.isPlaying = false;
     this.stopProgressTracking();
     
@@ -837,10 +843,10 @@ class MusedropsPlayer {
   handleStoryEnd() {
     console.log('Story ended, starting enhanced ending sequence');
     
-    // Raise background music volume to 60% when TTS ends
+    // Raise background music volume when TTS ends
     if (this.backgroundMusic && !this.backgroundMusic.paused) {
-      console.log('Raising background music volume to 60% at story end');
-      this.backgroundMusic.volume = 0.6;
+      console.log('Fading background music up at story end');
+      this.fadeBackgroundMusic(this.lowVol, this.highVol, 800);
     }
     
     // Wait 2 seconds with background music at full volume
@@ -867,33 +873,48 @@ class MusedropsPlayer {
     }, 2000);
   }
 
+  fadeBackgroundMusic(startVol, endVol, duration, callback) {
+    if (!this.backgroundMusic || this.backgroundMusic.paused) {
+      if (callback) callback();
+      return;
+    }
+    
+    console.log(`Fading background music from ${startVol} to ${endVol} over ${duration}ms`);
+    const volumeDiff = endVol - startVol;
+    const fadeSteps = Math.ceil(duration / this.fadeStepLength);
+    const volumeStep = volumeDiff / fadeSteps;
+    let currentStep = 0;
+    
+    const fadeInterval = setInterval(() => {
+      currentStep++;
+      const newVolume = Math.max(0, Math.min(1, startVol + (volumeStep * currentStep)));
+      this.backgroundMusic.volume = newVolume;
+      
+      if (currentStep >= fadeSteps || 
+          (volumeDiff > 0 && newVolume >= endVol) || 
+          (volumeDiff < 0 && newVolume <= endVol)) {
+        clearInterval(fadeInterval);
+        this.backgroundMusic.volume = endVol;
+        console.log(`Fade complete: ${newVolume.toFixed(2)}`);
+        if (callback) callback();
+      }
+    }, this.fadeStepLength);
+  }
+
   fadeOutAndStopBackgroundMusic(callback) {
     if (!this.backgroundMusic || this.backgroundMusic.paused) {
       if (callback) callback();
       return;
     }
     
-    console.log('Fading out background music over 3 seconds');
-    const startVolume = this.backgroundMusic.volume;
-    const fadeSteps = 60; // 60 steps over 3 seconds = 50ms per step
-    const volumeStep = startVolume / fadeSteps;
-    let currentStep = 0;
-    
-    const fadeInterval = setInterval(() => {
-      currentStep++;
-      const newVolume = Math.max(0, startVolume - (volumeStep * currentStep));
-      this.backgroundMusic.volume = newVolume;
-      console.log('Fade step:', currentStep, 'Volume:', newVolume.toFixed(2));
-      
-      if (currentStep >= fadeSteps || newVolume <= 0) {
-        clearInterval(fadeInterval);
-        this.backgroundMusic.pause();
-        this.backgroundMusic.currentTime = 0;
-        this.backgroundMusic.volume = 0.6; // Reset for next story
-        console.log('Background music fade out complete');
-        if (callback) callback();
-      }
-    }, 50); // 50ms intervals for smoother fade
+    // Fade from current volume (should be highVol) to 0 over 3 seconds
+    this.fadeBackgroundMusic(this.highVol, 0, 3000, () => {
+      this.backgroundMusic.pause();
+      this.backgroundMusic.currentTime = 0;
+      this.backgroundMusic.volume = this.highVol; // Reset for next story
+      console.log('Background music fade out and stop complete');
+      if (callback) callback();
+    });
   }
 
   nextStory() {
