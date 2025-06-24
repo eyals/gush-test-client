@@ -496,6 +496,9 @@ class MusedropsPlayer {
   async showStory(index, autoPlay = false) {
     if (index < 0 || index >= this.stories.length) return;
 
+    // Reset time displays immediately when switching stories
+    this.resetTimeDisplays();
+
     // Set flag to prevent play indicator during story switch
     this.isSwitchingStories = true;
 
@@ -528,6 +531,11 @@ class MusedropsPlayer {
       if (this.audio.src) {
         this.audio.pause();
         this.stopProgressTracking();
+        // Clear the audio source to prevent old values from showing
+        this.audio.src = "";
+        this.audio.currentTime = 0;
+        // Force reset time displays to show dashes
+        this.resetTimeDisplays();
       }
 
       // Set new audio source
@@ -584,7 +592,8 @@ class MusedropsPlayer {
       this.setImageWithFallback(storyEl, story.shows.image_url, "full");
     }
 
-    this.updateProgress(0, story.duration || 0);
+    // Reset progress to 0 with no duration until audio loads
+    this.updateProgress(0, 0);
 
     // Update media session metadata for bluetooth controls
     this.updateMediaSessionMetadata(story);
@@ -634,7 +643,7 @@ class MusedropsPlayer {
   }
 
   handleTimeUpdate() {
-    if (this.audio && this.audio.duration > 0) {
+    if (this.audio && this.audio.duration > 0 && !this.isSwitchingStories) {
       this.updateProgress(this.audio.currentTime, this.audio.duration);
       this.updateMediaSessionPositionState();
     }
@@ -685,9 +694,9 @@ class MusedropsPlayer {
     // Always update time display
     if (this.progressTimes && this.progressTimes.length >= 2) {
       this.progressTimes[0].textContent = this.formatTime(currentTime);
-      // Only show duration if it's a valid number greater than 0
+      // Show time remaining instead of total duration
       this.progressTimes[1].textContent =
-        duration > 0 ? this.formatTime(duration) : "-:--";
+        duration > 0 ? this.formatTime(duration - currentTime) : "-:--";
     }
   }
 
@@ -706,6 +715,19 @@ class MusedropsPlayer {
     }
     if (this.forwardBtn) {
       this.forwardBtn.classList.add("disabled");
+    }
+    // Reset time displays when disabling progress bar
+    this.resetTimeDisplays();
+  }
+
+  resetTimeDisplays() {
+    if (this.progressTimes && this.progressTimes.length >= 2) {
+      this.progressTimes[0].textContent = "--:--";
+      this.progressTimes[1].textContent = "--:--";
+    }
+    // Reset progress bar fill
+    if (this.progressFill) {
+      this.progressFill.style.width = "0%";
     }
   }
 
@@ -1051,12 +1073,14 @@ class MusedropsPlayer {
   }
 
   nextStory() {
+    this.resetTimeDisplays();
     this.stopBackgroundMusic();
     const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
     this.showStory(nextIndex, true);
   }
 
   previousStory() {
+    this.resetTimeDisplays();
     this.stopBackgroundMusic();
     const prevIndex =
       (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
