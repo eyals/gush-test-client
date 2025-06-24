@@ -4,69 +4,69 @@ import { fetchStories } from "./supabase.js";
 import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
-  
   // Image transformation function
-  transformImageUrl(imageUrl, size = 'full') {
+  transformImageUrl(imageUrl, size = "full") {
     if (!imageUrl) return this.getFallbackImageUrl(size);
-    
+
     // Replace =/object/ with /render/image/
-    let transformedUrl = imageUrl.replace('=/object/', '/render/image/');
-    
+    let transformedUrl = imageUrl.replace("=/object/", "/render/image/");
+
     // Add transformation parameters based on size
-    if (size === 'full') {
-      transformedUrl += '?resize=contain&quality=50&width=500';
-    } else if (size === 'smallThumb') {
-      transformedUrl += '?resize=cover&quality=50&width=192&height=192';
-    } else if (size === 'largeThumb') {
-      transformedUrl += '?resize=cover&quality=50&width=512&height=512';
+    if (size === "full") {
+      transformedUrl += "?resize=contain&quality=50&width=500";
+    } else if (size === "smallThumb") {
+      transformedUrl += "?resize=cover&quality=50&width=192&height=192";
+    } else if (size === "largeThumb") {
+      transformedUrl += "?resize=cover&quality=50&width=512&height=512";
     }
-    
+
     return transformedUrl;
   }
 
   // Get fallback image URL with same transformation parameters
-  getFallbackImageUrl(size = 'full') {
-    const baseUrl = 'https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/default-show-image.png';
-    let fallbackUrl = baseUrl.replace('=/object/', '/render/image/');
-    
+  getFallbackImageUrl(size = "full") {
+    const baseUrl =
+      "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/default-show-image.png";
+    let fallbackUrl = baseUrl.replace("=/object/", "/render/image/");
+
     // Add same transformation parameters as regular images
-    if (size === 'full') {
-      fallbackUrl += '?resize=contain&quality=50&width=500';
-    } else if (size === 'smallThumb') {
-      fallbackUrl += '?resize=cover&quality=50&width=192&height=192';
-    } else if (size === 'largeThumb') {
-      fallbackUrl += '?resize=cover&quality=50&width=512&height=512';
+    if (size === "full") {
+      fallbackUrl += "?resize=contain&quality=50&width=500";
+    } else if (size === "smallThumb") {
+      fallbackUrl += "?resize=cover&quality=50&width=192&height=192";
+    } else if (size === "largeThumb") {
+      fallbackUrl += "?resize=cover&quality=50&width=512&height=512";
     }
-    
+
     return fallbackUrl;
   }
 
   // Set background image with fallback handling
-  setImageWithFallback(element, imageUrl, size = 'full') {
+  setImageWithFallback(element, imageUrl, size = "full") {
     if (!element) return;
-    
+
     // If no image URL provided, use fallback immediately
     if (!imageUrl) {
       const fallbackUrl = this.getFallbackImageUrl(size);
       element.style.backgroundImage = `url(${fallbackUrl})`;
       return;
     }
-    
+
     // Try to load the original image first
     const transformedUrl = this.transformImageUrl(imageUrl, size);
     const img = new Image();
-    
+
     img.onload = () => {
       // Image loaded successfully, set it as background
       element.style.backgroundImage = `url(${transformedUrl})`;
     };
-    
+
     img.onerror = () => {
       // Image failed to load, use fallback
       const fallbackUrl = this.getFallbackImageUrl(size);
       element.style.backgroundImage = `url(${fallbackUrl})`;
     };
-    
+
     // Start loading the image
     img.src = transformedUrl;
   }
@@ -81,21 +81,21 @@ class MusedropsPlayer {
     this.isPlaying = false;
     this.progressInterval = null;
     this.hasInteracted = false;
-    
+
     // Initialize audio
     this.audio = new Audio();
     this.dropSound = document.getElementById("drop-sound");
     this.backgroundMusic = document.getElementById("background-music");
-    
+
     // Wait for DOM to be fully loaded
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => this.initialize());
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", () => this.initialize());
     } else {
       // DOM already loaded, initialize immediately
       this.initialize();
     }
   }
-  
+
   initialize() {
     try {
       // Get required elements with null checks
@@ -104,37 +104,38 @@ class MusedropsPlayer {
       this.playerView = document.getElementById("player-view");
       this.storiesContainer = document.getElementById("stories-container");
       this.playIndicator = document.querySelector(".play-indicator");
-      
+
       // Player elements
       this.progressFill = document.querySelector(".progress-fill");
       this.progressTimes = document.querySelectorAll(".progress-time");
       this.progressContainer = document.querySelector(".progress-container");
-      
+
       // Buttons
       this.rewindBtn = document.getElementById("rewind-btn");
       this.forwardBtn = document.getElementById("forward-btn");
       this.likeBtn = document.querySelector(".like-btn");
       this.likeCount = document.querySelector(".like-count");
-      
+
       // Check for required elements
       if (!this.initialMode || !this.playerView || !this.storiesContainer) {
-        throw new Error('Required elements not found in DOM');
+        throw new Error("Required elements not found in DOM");
       }
-      
-      this.isTouchDevice = 'ontouchstart' in window || 
-                          navigator.maxTouchPoints > 0 || 
-                          navigator.msMaxTouchPoints > 0;
-      
+
+      this.isTouchDevice =
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0;
+
       // Initialize the app
       this.initializeEventListeners();
       this.initializeAudio();
       this.loadStories();
-      
+
       this.isInitialized = true;
-      console.log('MusedropsPlayer initialized successfully');
+      console.log("MusedropsPlayer initialized successfully");
     } catch (error) {
-      console.error('Failed to initialize MusedropsPlayer:', error);
-      this.showError('Failed to initialize player. Please refresh the page.');
+      console.error("Failed to initialize MusedropsPlayer:", error);
+      this.showError("Failed to initialize player. Please refresh the page.");
     }
   }
 
@@ -148,58 +149,68 @@ class MusedropsPlayer {
     if (this.backgroundMusic) {
       // Background music volume settings
       this.highVol = 0.6;
-      this.lowVol = 0.1;
+      this.lowVol = 0.07;
       this.fadeStepLength = 100; // 100ms
-      
+
       // Set initial volume to 60% when music starts alone
       this.backgroundMusic.volume = this.highVol;
-      
+
       // Add event listeners for background music
-      this.backgroundMusic.addEventListener('ended', () => {
+      this.backgroundMusic.addEventListener("ended", () => {
         // This shouldn't fire due to loop attribute, but just in case
         if (this.backgroundMusic.src) {
           this.backgroundMusic.currentTime = 0;
-          this.backgroundMusic.play().catch(e => console.error('Error restarting background music:', e));
+          this.backgroundMusic
+            .play()
+            .catch((e) =>
+              console.error("Error restarting background music:", e)
+            );
         }
       });
-      
-      this.backgroundMusic.addEventListener('error', (e) => {
-        console.error('Background music error:', e);
-        console.error('Background music src:', this.backgroundMusic.src);
-        console.error('Background music error code:', this.backgroundMusic.error?.code);
-        console.error('Background music error message:', this.backgroundMusic.error?.message);
+
+      this.backgroundMusic.addEventListener("error", (e) => {
+        console.error("Background music error:", e);
+        console.error("Background music src:", this.backgroundMusic.src);
+        console.error(
+          "Background music error code:",
+          this.backgroundMusic.error?.code
+        );
+        console.error(
+          "Background music error message:",
+          this.backgroundMusic.error?.message
+        );
       });
 
-      this.backgroundMusic.addEventListener('canplay', () => {
-        console.log('Background music can play');
+      this.backgroundMusic.addEventListener("canplay", () => {
+        console.log("Background music can play");
       });
 
-      this.backgroundMusic.addEventListener('loadstart', () => {
-        console.log('Background music load started');
+      this.backgroundMusic.addEventListener("loadstart", () => {
+        console.log("Background music load started");
       });
 
-      this.backgroundMusic.addEventListener('loadeddata', () => {
-        console.log('Background music data loaded');
+      this.backgroundMusic.addEventListener("loadeddata", () => {
+        console.log("Background music data loaded");
       });
     }
   }
 
   initializeMediaSession() {
-    if ('mediaSession' in navigator) {
+    if ("mediaSession" in navigator) {
       // Set up action handlers for bluetooth/media controls
-      navigator.mediaSession.setActionHandler('play', () => {
+      navigator.mediaSession.setActionHandler("play", () => {
         this.play();
       });
 
-      navigator.mediaSession.setActionHandler('pause', () => {
+      navigator.mediaSession.setActionHandler("pause", () => {
         this.pause();
       });
 
-      navigator.mediaSession.setActionHandler('nexttrack', () => {
+      navigator.mediaSession.setActionHandler("nexttrack", () => {
         this.nextStory();
       });
 
-      navigator.mediaSession.setActionHandler('previoustrack', () => {
+      navigator.mediaSession.setActionHandler("previoustrack", () => {
         this.previousStory();
       });
     }
@@ -207,28 +218,28 @@ class MusedropsPlayer {
 
   showError(message) {
     console.error(message);
-    const errorDiv = document.createElement('div');
-    errorDiv.style.position = 'fixed';
-    errorDiv.style.bottom = '20px';
-    errorDiv.style.left = '50%';
-    errorDiv.style.transform = 'translateX(-50%)';
-    errorDiv.style.background = 'rgba(255, 0, 0, 0.8)';
-    errorDiv.style.color = 'white';
-    errorDiv.style.padding = '10px 20px';
-    errorDiv.style.borderRadius = '5px';
-    errorDiv.style.zIndex = '10000';
+    const errorDiv = document.createElement("div");
+    errorDiv.style.position = "fixed";
+    errorDiv.style.bottom = "20px";
+    errorDiv.style.left = "50%";
+    errorDiv.style.transform = "translateX(-50%)";
+    errorDiv.style.background = "rgba(255, 0, 0, 0.8)";
+    errorDiv.style.color = "white";
+    errorDiv.style.padding = "10px 20px";
+    errorDiv.style.borderRadius = "5px";
+    errorDiv.style.zIndex = "10000";
     errorDiv.textContent = message;
     document.body.appendChild(errorDiv);
-    
+
     // Remove after 5 seconds
     setTimeout(() => {
       errorDiv.remove();
     }, 5000);
   }
-  
+
   initializeEventListeners() {
     console.log("Initializing event listeners...");
-    
+
     try {
       // Initial mode click/tap - use both touch and click for maximum compatibility
       const handleInitialTap = (e) => {
@@ -239,30 +250,34 @@ class MusedropsPlayer {
         console.log("Initial mode tapped");
         this.showPlayer();
       };
-      
+
       // Add multiple event types to ensure cross-device compatibility
-      this.initialMode.addEventListener('click', handleInitialTap, { passive: false });
-      this.initialMode.addEventListener('touchend', handleInitialTap, { passive: false });
-      
+      this.initialMode.addEventListener("click", handleInitialTap, {
+        passive: false,
+      });
+      this.initialMode.addEventListener("touchend", handleInitialTap, {
+        passive: false,
+      });
+
       // Make sure the element is interactive
-      this.initialMode.style.cursor = 'pointer';
-      
+      this.initialMode.style.cursor = "pointer";
+
       // Add debug button handler if it exists
-      const debugButton = document.getElementById('debug-start');
+      const debugButton = document.getElementById("debug-start");
       if (debugButton) {
-        debugButton.addEventListener('click', handleInitialTap);
+        debugButton.addEventListener("click", handleInitialTap);
       }
-      
-      console.log('Event listeners initialized');
+
+      console.log("Event listeners initialized");
     } catch (error) {
-      console.error('Error initializing event listeners:', error);
-      this.showError('Error setting up player controls');
+      console.error("Error initializing event listeners:", error);
+      this.showError("Error setting up player controls");
     }
     if (this.forwardBtn) {
       this.forwardBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (this.forwardBtn.classList.contains('disabled')) {
-          console.log('Forward button disabled, ignoring click');
+        if (this.forwardBtn.classList.contains("disabled")) {
+          console.log("Forward button disabled, ignoring click");
           return;
         }
         this.skipForward();
@@ -272,13 +287,16 @@ class MusedropsPlayer {
       this.rewindBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Rewind button clicked, disabled?', this.rewindBtn.classList.contains('disabled'));
-        console.log('Rewind button classes:', this.rewindBtn.className);
-        if (this.rewindBtn.classList.contains('disabled')) {
-          console.log('Rewind button disabled, ignoring click');
+        console.log(
+          "Rewind button clicked, disabled?",
+          this.rewindBtn.classList.contains("disabled")
+        );
+        console.log("Rewind button classes:", this.rewindBtn.className);
+        if (this.rewindBtn.classList.contains("disabled")) {
+          console.log("Rewind button disabled, ignoring click");
           return;
         }
-        console.log('Executing rewind');
+        console.log("Executing rewind");
         this.skipBackward();
       });
     }
@@ -315,8 +333,14 @@ class MusedropsPlayer {
           this.updatePlayIndicator(true);
         }
       });
-      this.audio.addEventListener("timeupdate", this.handleTimeUpdate.bind(this));
-      this.audio.addEventListener("durationchange", this.handleDurationChange.bind(this));
+      this.audio.addEventListener(
+        "timeupdate",
+        this.handleTimeUpdate.bind(this)
+      );
+      this.audio.addEventListener(
+        "durationchange",
+        this.handleDurationChange.bind(this)
+      );
     }
   }
 
@@ -324,38 +348,37 @@ class MusedropsPlayer {
     try {
       // Try to fetch from Supabase first
       let stories = [];
-      
+
       try {
         stories = await fetchStories();
       } catch (error) {
         // Silently handle the error - we'll fall back to mock data
       }
-      
+
       // If we got stories from Supabase, use them
       if (stories && stories.length > 0) {
         this.stories = stories;
       } else {
         // If no stories from Supabase, use mock data
-        this.showError('No stories available. Using demo content.');
+        this.showError("No stories available. Using demo content.");
         this.stories = mockStories;
       }
-      
+
       // Make sure we have at least one story
       if (!this.stories || this.stories.length === 0) {
-        this.showError('No stories available');
-        throw new Error('No stories available from any source');
+        this.showError("No stories available");
+        throw new Error("No stories available from any source");
       }
-      
     } catch (error) {
       // If there's any error, use mock data
-      this.showError('Loading stories. Using demo content.');
+      this.showError("Loading stories. Using demo content.");
       this.stories = mockStories;
     } finally {
       // Always render whatever stories we have
       try {
         this.renderStories();
       } catch (renderError) {
-        this.showError('Failed to load stories');
+        this.showError("Failed to load stories");
       }
     }
   }
@@ -387,11 +410,11 @@ class MusedropsPlayer {
 
   handleGestureEnd(e) {
     if (!this.touchStartX) return;
-    
+
     const endX = (e.changedTouches ? e.changedTouches[0] : e).clientX;
     const deltaX = this.touchStartX - endX;
     const absDeltaX = Math.abs(deltaX);
-    
+
     // Minimum distance to consider it a swipe (in pixels)
     const swipeThreshold = 50;
 
@@ -406,15 +429,20 @@ class MusedropsPlayer {
     } else if (absDeltaX < 10) {
       // It's a tap, toggle play/pause unless it's on a button or progress controls
       const target = e.changedTouches ? e.changedTouches[0].target : e.target;
-      console.log('Tap detected, target:', target, 'closest progress-container:', target.closest(".progress-container"));
+      console.log(
+        "Tap detected, target:",
+        target,
+        "closest progress-container:",
+        target.closest(".progress-container")
+      );
       if (!target.closest(".control-btn, .action-btn, .progress-container")) {
-        console.log('Triggering togglePlayPause');
+        console.log("Triggering togglePlayPause");
         this.togglePlayPause();
       } else {
-        console.log('Tap ignored - hit controls');
+        console.log("Tap ignored - hit controls");
       }
     }
-    
+
     // Reset touch start position
     this.touchStartX = null;
   }
@@ -424,12 +452,12 @@ class MusedropsPlayer {
       e.preventDefault();
       e.stopPropagation();
     }
-    
+
     if (this.hasInteracted) return;
     this.hasInteracted = true;
-    
+
     this.showPlayer();
-    
+
     // Start playing the first story after a short delay
     setTimeout(() => {
       this.play();
@@ -439,24 +467,24 @@ class MusedropsPlayer {
   async showPlayer() {
     try {
       console.log("showPlayer called");
-      
+
       // Check if we're already showing the player
       if (this.isTransitioning || !this.playerView) {
         return;
       }
-      
+
       this.isTransitioning = true;
-      
+
       // Make sure we have stories loaded
       if (!this.stories || this.stories.length === 0) {
         await this.loadStories();
       }
-      
+
       // Remove the initial mode with animation if it exists
       if (this.initialMode) {
-        this.initialMode.style.pointerEvents = 'none';
+        this.initialMode.style.pointerEvents = "none";
         this.initialMode.classList.add("exiting");
-        
+
         // Wait for the animation to complete before removing
         setTimeout(() => {
           if (this.initialMode) {
@@ -469,20 +497,20 @@ class MusedropsPlayer {
         this.finishShowingPlayer();
       }
     } catch (error) {
-      console.error('Error in showPlayer:', error);
-      this.showError('Error loading player');
+      console.error("Error in showPlayer:", error);
+      this.showError("Error loading player");
       this.isTransitioning = false;
     }
   }
-  
+
   finishShowingPlayer() {
     try {
       // Show the player and start with the first story
       this.playerView.classList.remove("hidden");
       this.showStory(0, true); // Auto-play the first story
     } catch (error) {
-      console.error('Error finishing player show:', error);
-      this.showError('Error initializing player');
+      console.error("Error finishing player show:", error);
+      this.showError("Error initializing player");
     } finally {
       this.isTransitioning = false;
     }
@@ -524,7 +552,7 @@ class MusedropsPlayer {
 
       // Set new audio source
       this.audio.src = currentStory.ttsAudioUrl;
-      
+
       try {
         // Load the new audio
         await new Promise((resolve, reject) => {
@@ -540,8 +568,8 @@ class MusedropsPlayer {
           this.updatePlayIndicator(true);
         }
       } catch (error) {
-        console.error('Error loading audio:', error);
-        this.showError('Error loading audio');
+        console.error("Error loading audio:", error);
+        this.showError("Error loading audio");
         this.updatePlayIndicator(true);
       }
     }
@@ -573,54 +601,54 @@ class MusedropsPlayer {
     // Update story background image with fallback handling
     const storyEl = document.querySelector(`.story[data-id="${story.id}"]`);
     if (storyEl) {
-      this.setImageWithFallback(storyEl, story.shows.image_url, 'full');
+      this.setImageWithFallback(storyEl, story.shows.image_url, "full");
     }
 
     this.updateProgress(0, story.duration || 0);
-    
+
     // Update media session metadata for bluetooth controls
     this.updateMediaSessionMetadata(story);
   }
 
   updateMediaSessionMetadata(story) {
-    if ('mediaSession' in navigator && story) {
+    if ("mediaSession" in navigator && story) {
       try {
-        const showName = story.shows.name || 'Stories';
-        
+        const showName = story.shows.name || "Stories";
+
         // Get artwork URLs with fallback support
-        const smallThumbUrl = story.shows.image_url ? 
-          this.transformImageUrl(story.shows.image_url, 'smallThumb') : 
-          this.getFallbackImageUrl('smallThumb');
-        const largeThumbUrl = story.shows.image_url ? 
-          this.transformImageUrl(story.shows.image_url, 'largeThumb') : 
-          this.getFallbackImageUrl('largeThumb');
-        
+        const smallThumbUrl = story.shows.image_url
+          ? this.transformImageUrl(story.shows.image_url, "smallThumb")
+          : this.getFallbackImageUrl("smallThumb");
+        const largeThumbUrl = story.shows.image_url
+          ? this.transformImageUrl(story.shows.image_url, "largeThumb")
+          : this.getFallbackImageUrl("largeThumb");
+
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
           artist: `Musedrops - ${showName}`,
           artwork: [
             {
               src: smallThumbUrl,
-              sizes: '192x192',
-              type: 'image/jpeg'
+              sizes: "192x192",
+              type: "image/jpeg",
             },
             {
               src: largeThumbUrl,
-              sizes: '512x512',
-              type: 'image/jpeg'
-            }
-          ]
+              sizes: "512x512",
+              type: "image/jpeg",
+            },
+          ],
         });
-        
+
         // Set duration explicitly for Samsung compatibility
         if (this.audio && this.audio.duration > 0) {
           navigator.mediaSession.metadata = new MediaMetadata({
             ...navigator.mediaSession.metadata,
-            duration: this.audio.duration
+            duration: this.audio.duration,
           });
         }
       } catch (error) {
-        console.error('Error setting media session metadata:', error);
+        console.error("Error setting media session metadata:", error);
       }
     }
   }
@@ -639,18 +667,28 @@ class MusedropsPlayer {
   }
 
   updateMediaSessionPositionState() {
-    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+    if (
+      "mediaSession" in navigator &&
+      "setPositionState" in navigator.mediaSession
+    ) {
       try {
-        if (this.audio && this.audio.duration > 0 && !isNaN(this.audio.duration)) {
-          const position = Math.min(this.audio.currentTime || 0, this.audio.duration);
+        if (
+          this.audio &&
+          this.audio.duration > 0 &&
+          !isNaN(this.audio.duration)
+        ) {
+          const position = Math.min(
+            this.audio.currentTime || 0,
+            this.audio.duration
+          );
           navigator.mediaSession.setPositionState({
             duration: this.audio.duration,
             playbackRate: this.audio.playbackRate || 1.0,
-            position: Math.max(0, position)
+            position: Math.max(0, position),
           });
         }
       } catch (error) {
-        console.error('Error setting media session position state:', error);
+        console.error("Error setting media session position state:", error);
       }
     }
   }
@@ -668,7 +706,8 @@ class MusedropsPlayer {
     if (this.progressTimes && this.progressTimes.length >= 2) {
       this.progressTimes[0].textContent = this.formatTime(currentTime);
       // Only show duration if it's a valid number greater than 0
-      this.progressTimes[1].textContent = duration > 0 ? this.formatTime(duration) : '-:--';
+      this.progressTimes[1].textContent =
+        duration > 0 ? this.formatTime(duration) : "-:--";
     }
   }
 
@@ -680,37 +719,48 @@ class MusedropsPlayer {
 
   disableProgressBar() {
     if (this.progressContainer) {
-      this.progressContainer.classList.add('disabled');
+      this.progressContainer.classList.add("disabled");
     }
     if (this.rewindBtn) {
-      this.rewindBtn.classList.add('disabled');
-      console.log('Rewind button disabled, classes now:', this.rewindBtn.className);
+      this.rewindBtn.classList.add("disabled");
+      console.log(
+        "Rewind button disabled, classes now:",
+        this.rewindBtn.className
+      );
     }
     if (this.forwardBtn) {
-      this.forwardBtn.classList.add('disabled');
+      this.forwardBtn.classList.add("disabled");
     }
-    console.log('Progress controls disabled');
+    console.log("Progress controls disabled");
   }
 
   enableProgressBar() {
     if (this.progressContainer) {
-      this.progressContainer.classList.remove('disabled');
+      this.progressContainer.classList.remove("disabled");
     }
     if (this.rewindBtn) {
-      this.rewindBtn.classList.remove('disabled');
-      console.log('Rewind button enabled, classes now:', this.rewindBtn.className);
+      this.rewindBtn.classList.remove("disabled");
+      console.log(
+        "Rewind button enabled, classes now:",
+        this.rewindBtn.className
+      );
     }
     if (this.forwardBtn) {
-      this.forwardBtn.classList.remove('disabled');
+      this.forwardBtn.classList.remove("disabled");
     }
-    console.log('Progress controls enabled');
+    console.log("Progress controls enabled");
   }
 
   async loadBackgroundMusic(story) {
-    console.log('Loading background music for story:', story.title, 'music_url:', story.shows.music_url);
-    
+    console.log(
+      "Loading background music for story:",
+      story.title,
+      "music_url:",
+      story.shows.music_url
+    );
+
     if (!this.backgroundMusic || !story.shows.music_url) {
-      console.log('No background music element or music_url, stopping music');
+      console.log("No background music element or music_url, stopping music");
       // Stop background music if no music_url
       this.stopBackgroundMusic();
       return;
@@ -718,8 +768,11 @@ class MusedropsPlayer {
 
     // If the music source is the same as current, don't reload
     // Use includes() because the browser might add the full URL
-    if (this.backgroundMusic.src && this.backgroundMusic.src.includes(story.shows.music_url)) {
-      console.log('Same music source, not reloading');
+    if (
+      this.backgroundMusic.src &&
+      this.backgroundMusic.src.includes(story.shows.music_url)
+    ) {
+      console.log("Same music source, not reloading");
       return;
     }
 
@@ -727,46 +780,58 @@ class MusedropsPlayer {
     this.stopBackgroundMusic();
 
     // Load new background music
-    console.log('Setting background music source to:', story.shows.music_url);
+    console.log("Setting background music source to:", story.shows.music_url);
     this.backgroundMusic.src = story.shows.music_url;
-    
+
     return new Promise((resolve, reject) => {
       const onCanPlay = () => {
-        console.log('Background music ready to play');
-        this.backgroundMusic.removeEventListener('canplay', onCanPlay);
-        this.backgroundMusic.removeEventListener('error', onError);
+        console.log("Background music ready to play");
+        this.backgroundMusic.removeEventListener("canplay", onCanPlay);
+        this.backgroundMusic.removeEventListener("error", onError);
         resolve();
       };
-      
+
       const onError = (e) => {
-        console.error('Error loading background music:', e);
-        this.backgroundMusic.removeEventListener('canplay', onCanPlay);
-        this.backgroundMusic.removeEventListener('error', onError);
+        console.error("Error loading background music:", e);
+        this.backgroundMusic.removeEventListener("canplay", onCanPlay);
+        this.backgroundMusic.removeEventListener("error", onError);
         reject(e);
       };
-      
-      this.backgroundMusic.addEventListener('canplay', onCanPlay);
-      this.backgroundMusic.addEventListener('error', onError);
+
+      this.backgroundMusic.addEventListener("canplay", onCanPlay);
+      this.backgroundMusic.addEventListener("error", onError);
       this.backgroundMusic.load();
-    }).catch(e => {
-      console.error('Failed to load background music, continuing without it');
+    }).catch((e) => {
+      console.error("Failed to load background music, continuing without it");
     });
   }
 
   startBackgroundMusic() {
-    console.log('Attempting to start background music, src:', this.backgroundMusic?.src);
-    console.log('Background music volume:', this.backgroundMusic?.volume);
-    console.log('Background music readyState:', this.backgroundMusic?.readyState);
+    console.log(
+      "Attempting to start background music, src:",
+      this.backgroundMusic?.src
+    );
+    console.log("Background music volume:", this.backgroundMusic?.volume);
+    console.log(
+      "Background music readyState:",
+      this.backgroundMusic?.readyState
+    );
     if (this.backgroundMusic && this.backgroundMusic.src) {
-      this.backgroundMusic.play().then(() => {
-        console.log('Background music started successfully');
-        console.log('Background music playing:', !this.backgroundMusic.paused);
-      }).catch(e => {
-        console.error('Error starting background music:', e);
-        console.error('Error details:', e.name, e.message);
-      });
+      this.backgroundMusic
+        .play()
+        .then(() => {
+          console.log("Background music started successfully");
+          console.log(
+            "Background music playing:",
+            !this.backgroundMusic.paused
+          );
+        })
+        .catch((e) => {
+          console.error("Error starting background music:", e);
+          console.error("Error details:", e.name, e.message);
+        });
     } else {
-      console.log('No background music to start');
+      console.log("No background music to start");
     }
   }
 
@@ -780,7 +845,7 @@ class MusedropsPlayer {
     if (this.backgroundMusic) {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
-      this.backgroundMusic.src = '';
+      this.backgroundMusic.src = "";
       // Reset volume for next song
       this.backgroundMusic.volume = this.highVol;
     }
@@ -789,14 +854,19 @@ class MusedropsPlayer {
   async play() {
     if (!this.audio) return;
 
-    console.log('Play method called, currentStory:', this.currentStory?.title, 'music_url:', this.currentStory?.shows?.music_url);
-    console.log('Audio currentTime:', this.audio.currentTime);
+    console.log(
+      "Play method called, currentStory:",
+      this.currentStory?.title,
+      "music_url:",
+      this.currentStory?.shows?.music_url
+    );
+    console.log("Audio currentTime:", this.audio.currentTime);
 
     // Start background music first if available
     if (this.currentStory && this.currentStory.shows.music_url) {
-      console.log('Starting background music...');
+      console.log("Starting background music...");
       const isResume = this.audio.currentTime > 0;
-      
+
       if (isResume) {
         // When resuming, set to low volume and start music
         this.backgroundMusic.volume = this.lowVol;
@@ -805,21 +875,21 @@ class MusedropsPlayer {
         // When starting fresh, use high volume and wait 2 seconds
         this.backgroundMusic.volume = this.highVol;
         this.startBackgroundMusic();
-        console.log('Waiting 2 seconds before starting TTS...');
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        console.log('2 second delay complete, starting TTS');
+        console.log("Waiting 2 seconds before starting TTS...");
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        console.log("2 second delay complete, starting TTS");
       }
     }
 
     this.audio
       .play()
       .then(() => {
-        console.log('TTS started successfully');
+        console.log("TTS started successfully");
         // Enable progress bar when TTS starts
         this.enableProgressBar();
         // Lower background music volume when TTS starts
         if (this.backgroundMusic && !this.backgroundMusic.paused) {
-          console.log('Fading background music down for TTS');
+          console.log("Fading background music down for TTS");
           this.fadeBackgroundMusic(this.highVol, this.lowVol, 500);
         }
         this.isPlaying = true;
@@ -838,27 +908,37 @@ class MusedropsPlayer {
     // No need to fade volume when pausing since music is stopped
     this.isPlaying = false;
     this.stopProgressTracking();
-    
+
     // Only enable progress controls if audio has actual content to scrub through
     // and we're not in a transition state (like story ending)
-    console.log('Pause: audio.duration:', this.audio.duration, 'audio.ended:', this.audio.ended);
+    console.log(
+      "Pause: audio.duration:",
+      this.audio.duration,
+      "audio.ended:",
+      this.audio.ended
+    );
     if (this.audio.duration > 0 && !this.audio.ended) {
       this.enableProgressBar();
-      console.log('Pause: enabling controls (audio has content and not ended)');
+      console.log("Pause: enabling controls (audio has content and not ended)");
     } else {
-      console.log('Pause: keeping controls disabled (no content or audio ended)');
+      console.log(
+        "Pause: keeping controls disabled (no content or audio ended)"
+      );
     }
-    
+
     // Clear position state on Samsung devices to prevent stuck progress
-    if ('mediaSession' in navigator && 'setPositionState' in navigator.mediaSession) {
+    if (
+      "mediaSession" in navigator &&
+      "setPositionState" in navigator.mediaSession
+    ) {
       try {
         navigator.mediaSession.setPositionState({
           duration: this.audio.duration || 0,
           playbackRate: 1.0, // Can't be 0, use 1.0 instead
-          position: this.audio.currentTime || 0
+          position: this.audio.currentTime || 0,
         });
       } catch (error) {
-        console.error('Error clearing position state on pause:', error);
+        console.error("Error clearing position state on pause:", error);
       }
     }
   }
@@ -902,17 +982,17 @@ class MusedropsPlayer {
   }
 
   handleStoryEnd() {
-    console.log('Story ended, starting enhanced ending sequence');
-    
+    console.log("Story ended, starting enhanced ending sequence");
+
     // Disable progress bar when story ends
     this.disableProgressBar();
-    
+
     // Raise background music volume when TTS ends
     if (this.backgroundMusic && !this.backgroundMusic.paused) {
-      console.log('Fading background music up at story end');
+      console.log("Fading background music up at story end");
       this.fadeBackgroundMusic(this.lowVol, this.highVol, 800);
     }
-    
+
     // Wait 2 seconds with background music at full volume
     setTimeout(() => {
       // Start fade out, and play drop sound when fade completes
@@ -920,7 +1000,7 @@ class MusedropsPlayer {
         // Wait 1 second after fade out completes, then play drop sound
         setTimeout(() => {
           if (this.dropSound) {
-            console.log('Playing drop sound after 1 second pause');
+            console.log("Playing drop sound after 1 second pause");
             this.dropSound.currentTime = 0;
             this.dropSound
               .play()
@@ -929,7 +1009,7 @@ class MusedropsPlayer {
 
           // Wait 2 more seconds after drop sound, then start next story
           setTimeout(() => {
-            console.log('Starting next story after drop sound delay');
+            console.log("Starting next story after drop sound delay");
             this.nextStory();
           }, 2000);
         }, 1000);
@@ -942,20 +1022,25 @@ class MusedropsPlayer {
       if (callback) callback();
       return;
     }
-    
+
     const volumeDiff = endVol - startVol;
     const fadeSteps = Math.ceil(duration / this.fadeStepLength);
     const volumeStep = volumeDiff / fadeSteps;
     let currentStep = 0;
-    
+
     const fadeInterval = setInterval(() => {
       currentStep++;
-      const newVolume = Math.max(0, Math.min(1, startVol + (volumeStep * currentStep)));
+      const newVolume = Math.max(
+        0,
+        Math.min(1, startVol + volumeStep * currentStep)
+      );
       this.backgroundMusic.volume = newVolume;
-      
-      if (currentStep >= fadeSteps || 
-          (volumeDiff > 0 && newVolume >= endVol) || 
-          (volumeDiff < 0 && newVolume <= endVol)) {
+
+      if (
+        currentStep >= fadeSteps ||
+        (volumeDiff > 0 && newVolume >= endVol) ||
+        (volumeDiff < 0 && newVolume <= endVol)
+      ) {
         clearInterval(fadeInterval);
         this.backgroundMusic.volume = endVol;
         if (callback) callback();
@@ -968,13 +1053,13 @@ class MusedropsPlayer {
       if (callback) callback();
       return;
     }
-    
+
     // Fade from current volume (should be highVol) to 0 over 3 seconds
     this.fadeBackgroundMusic(this.highVol, 0, 3000, () => {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
       this.backgroundMusic.volume = this.highVol; // Reset for next story
-      console.log('Background music fade out and stop complete');
+      console.log("Background music fade out and stop complete");
       if (callback) callback();
     });
   }
