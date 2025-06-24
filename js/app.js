@@ -181,17 +181,8 @@ class MusedropsPlayer {
         );
       });
 
-      this.backgroundMusic.addEventListener("canplay", () => {
-        console.log("Background music can play");
-      });
 
-      this.backgroundMusic.addEventListener("loadstart", () => {
-        console.log("Background music load started");
-      });
 
-      this.backgroundMusic.addEventListener("loadeddata", () => {
-        console.log("Background music data loaded");
-      });
     }
   }
 
@@ -277,7 +268,6 @@ class MusedropsPlayer {
       this.forwardBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         if (this.forwardBtn.classList.contains("disabled")) {
-          console.log("Forward button disabled, ignoring click");
           return;
         }
         this.skipForward();
@@ -287,16 +277,9 @@ class MusedropsPlayer {
       this.rewindBtn.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        console.log(
-          "Rewind button clicked, disabled?",
-          this.rewindBtn.classList.contains("disabled")
-        );
-        console.log("Rewind button classes:", this.rewindBtn.className);
         if (this.rewindBtn.classList.contains("disabled")) {
-          console.log("Rewind button disabled, ignoring click");
           return;
         }
-        console.log("Executing rewind");
         this.skipBackward();
       });
     }
@@ -429,17 +412,9 @@ class MusedropsPlayer {
     } else if (absDeltaX < 10) {
       // It's a tap, toggle play/pause unless it's on a button or progress controls
       const target = e.changedTouches ? e.changedTouches[0].target : e.target;
-      console.log(
-        "Tap detected, target:",
-        target,
-        "closest progress-container:",
-        target.closest(".progress-container")
-      );
       if (!target.closest(".control-btn, .action-btn, .progress-container, .player-controls")) {
-        console.log("Triggering togglePlayPause");
         this.togglePlayPause();
       } else {
-        console.log("Tap ignored - hit controls");
       }
     }
 
@@ -723,15 +698,10 @@ class MusedropsPlayer {
     }
     if (this.rewindBtn) {
       this.rewindBtn.classList.add("disabled");
-      console.log(
-        "Rewind button disabled, classes now:",
-        this.rewindBtn.className
-      );
     }
     if (this.forwardBtn) {
       this.forwardBtn.classList.add("disabled");
     }
-    console.log("Progress controls disabled");
   }
 
   enableProgressBar() {
@@ -740,15 +710,10 @@ class MusedropsPlayer {
     }
     if (this.rewindBtn) {
       this.rewindBtn.classList.remove("disabled");
-      console.log(
-        "Rewind button enabled, classes now:",
-        this.rewindBtn.className
-      );
     }
     if (this.forwardBtn) {
       this.forwardBtn.classList.remove("disabled");
     }
-    console.log("Progress controls enabled");
   }
 
   async loadBackgroundMusic(story) {
@@ -785,7 +750,6 @@ class MusedropsPlayer {
 
     return new Promise((resolve, reject) => {
       const onCanPlay = () => {
-        console.log("Background music ready to play");
         this.backgroundMusic.removeEventListener("canplay", onCanPlay);
         this.backgroundMusic.removeEventListener("error", onError);
         resolve();
@@ -811,27 +775,16 @@ class MusedropsPlayer {
       "Attempting to start background music, src:",
       this.backgroundMusic?.src
     );
-    console.log("Background music volume:", this.backgroundMusic?.volume);
-    console.log(
-      "Background music readyState:",
-      this.backgroundMusic?.readyState
-    );
     if (this.backgroundMusic && this.backgroundMusic.src) {
       this.backgroundMusic
         .play()
         .then(() => {
-          console.log("Background music started successfully");
-          console.log(
-            "Background music playing:",
-            !this.backgroundMusic.paused
-          );
         })
         .catch((e) => {
           console.error("Error starting background music:", e);
           console.error("Error details:", e.name, e.message);
         });
     } else {
-      console.log("No background music to start");
     }
   }
 
@@ -911,19 +864,9 @@ class MusedropsPlayer {
 
     // Only enable progress controls if audio has actual content to scrub through
     // and we're not in a transition state (like story ending)
-    console.log(
-      "Pause: audio.duration:",
-      this.audio.duration,
-      "audio.ended:",
-      this.audio.ended
-    );
     if (this.audio.duration > 0 && !this.audio.ended) {
       this.enableProgressBar();
-      console.log("Pause: enabling controls (audio has content and not ended)");
     } else {
-      console.log(
-        "Pause: keeping controls disabled (no content or audio ended)"
-      );
     }
 
     // Clear position state on Samsung devices to prevent stuck progress
