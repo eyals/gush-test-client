@@ -303,6 +303,7 @@ body,
 }
 
 .story-series {
+  font-family: "Andale Mono", monospace;
   font-size: 20px;
   font-weight: 500;
   opacity: 0.9;
@@ -310,7 +311,8 @@ body,
 }
 
 .story-title {
-  font-size: 50px;
+  font-family: "Carme", sans-serif;
+  font-size: 40px;
   font-weight: 600;
   line-height: 1;
   margin-bottom: 16px;
@@ -368,6 +370,7 @@ body,
 }
 
 .progress-time {
+  font-family: "Andale Mono", monospace;
   font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
   min-width: 40px;
