@@ -149,7 +149,7 @@ class MusedropsPlayer {
     if (this.backgroundMusic) {
       // Background music volume settings
       this.highVol = 0.6;
-      this.lowVol = 0.03;
+      this.lowVol = 0.07;
       this.fadeStepLength = 100; // 100ms
 
       // Set initial volume to 60% when music starts alone
@@ -435,7 +435,7 @@ class MusedropsPlayer {
         "closest progress-container:",
         target.closest(".progress-container")
       );
-      if (!target.closest(".control-btn, .action-btn, .progress-container")) {
+      if (!target.closest(".control-btn, .action-btn, .progress-container, .player-controls")) {
         console.log("Triggering togglePlayPause");
         this.togglePlayPause();
       } else {
