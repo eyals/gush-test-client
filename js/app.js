@@ -75,12 +75,14 @@ class MusedropsPlayer {
     // Initialize state first
     this.isInitialized = false;
     this.isTransitioning = false;
+    this.isSwitchingStories = false;
     this.touchStartX = null;
     this.stories = [];
     this.currentStoryIndex = 0;
     this.isPlaying = false;
     this.progressInterval = null;
     this.hasInteracted = false;
+    this.audioMuted = false; // Universal master audio switch
 
     // Initialize audio
     this.audio = new Audio();
@@ -311,8 +313,8 @@ class MusedropsPlayer {
         this.updatePlayIndicator(false)
       );
       this.audio.addEventListener("pause", () => {
-        // Don't show play indicator if audio ended naturally
-        if (!this.audio.ended) {
+        // Don't show play indicator if audio ended naturally or if we're switching stories
+        if (!this.audio.ended && !this.isTransitioning && !this.isSwitchingStories) {
           this.updatePlayIndicator(true);
         }
       });
@@ -493,6 +495,9 @@ class MusedropsPlayer {
 
   async showStory(index, autoPlay = false) {
     if (index < 0 || index >= this.stories.length) return;
+
+    // Set flag to prevent play indicator during story switch
+    this.isSwitchingStories = true;
 
     this.currentStoryIndex = index;
     const currentStory = this.stories[index];
@@ -775,6 +780,13 @@ class MusedropsPlayer {
       "Attempting to start background music, src:",
       this.backgroundMusic?.src
     );
+    
+    // Check master audio switch
+    if (this.audioMuted) {
+      console.log("Audio is muted, not starting background music");
+      return;
+    }
+    
     if (this.backgroundMusic && this.backgroundMusic.src) {
       this.backgroundMusic
         .play()
@@ -807,6 +819,12 @@ class MusedropsPlayer {
   async play() {
     if (!this.audio) return;
 
+    // Check master audio switch
+    if (this.audioMuted) {
+      console.log("Audio is muted, not playing");
+      return;
+    }
+
     console.log(
       "Play method called, currentStory:",
       this.currentStory?.title,
@@ -838,6 +856,8 @@ class MusedropsPlayer {
       .play()
       .then(() => {
         console.log("TTS started successfully");
+        // Clear story switching flag now that audio is playing
+        this.isSwitchingStories = false;
         // Enable progress bar when TTS starts
         this.enableProgressBar();
         // Lower background music volume when TTS starts
@@ -861,6 +881,9 @@ class MusedropsPlayer {
     // No need to fade volume when pausing since music is stopped
     this.isPlaying = false;
     this.stopProgressTracking();
+
+    // Show play indicator when manually paused (even if audio ended)
+    this.updatePlayIndicator(true);
 
     // Only enable progress controls if audio has actual content to scrub through
     // and we're not in a transition state (like story ending)
@@ -888,9 +911,29 @@ class MusedropsPlayer {
 
   togglePlayPause() {
     if (this.isPlaying) {
+      // Pause: Always allowed with master audio switch
+      this.audioMuted = true;
       this.pause();
     } else {
-      this.play();
+      // Play: Handle different scenarios based on audio timeline
+      this.audioMuted = false;
+      
+      // Always hide play indicator immediately when play is pressed for responsiveness
+      this.updatePlayIndicator(false);
+      
+      if (this.audio.currentTime === 0) {
+        // Before TTS starts - seek to beginning of intro sequence
+        console.log("Play pressed before TTS starts - seeking to beginning");
+        this.audio.currentTime = 0;
+        this.play();
+      } else if (this.audio.ended) {
+        // After TTS ends - unmute and let timers run
+        console.log("Play pressed after TTS ends - unmuting audio");
+        // Audio is already muted, timers will continue
+      } else {
+        // During TTS - normal resume
+        this.play();
+      }
     }
   }
 
@@ -942,7 +985,7 @@ class MusedropsPlayer {
       this.fadeOutAndStopBackgroundMusic(() => {
         // Wait 1 second after fade out completes, then play drop sound
         setTimeout(() => {
-          if (this.dropSound) {
+          if (this.dropSound && !this.audioMuted) {
             console.log("Playing drop sound after 1 second pause");
             this.dropSound.currentTime = 0;
             this.dropSound
