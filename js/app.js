@@ -756,10 +756,10 @@ class MusedropsPlayer {
       .play()
       .then(() => {
         console.log('TTS started successfully');
-        // Lower background music volume to 20% when TTS starts
+        // Lower background music volume to 10% when TTS starts
         if (this.backgroundMusic && !this.backgroundMusic.paused) {
-          console.log('Lowering background music volume to 20% for TTS');
-          this.backgroundMusic.volume = 0.2;
+          console.log('Lowering background music volume to 10% for TTS');
+          this.backgroundMusic.volume = 0.10;
         }
         this.isPlaying = true;
         this.startProgressTracking();
@@ -835,20 +835,65 @@ class MusedropsPlayer {
   }
 
   handleStoryEnd() {
-    // Play drop sound after 500ms
+    console.log('Story ended, starting enhanced ending sequence');
+    
+    // Raise background music volume to 60% when TTS ends
+    if (this.backgroundMusic && !this.backgroundMusic.paused) {
+      console.log('Raising background music volume to 60% at story end');
+      this.backgroundMusic.volume = 0.6;
+    }
+    
+    // Wait 2 seconds with background music at full volume
     setTimeout(() => {
-      if (this.dropSound) {
-        this.dropSound.currentTime = 0;
-        this.dropSound
-          .play()
-          .catch((e) => console.error("Error playing drop sound:", e));
-      }
+      // Start fade out, and play drop sound when fade completes
+      this.fadeOutAndStopBackgroundMusic(() => {
+        // Wait 1 second after fade out completes, then play drop sound
+        setTimeout(() => {
+          if (this.dropSound) {
+            console.log('Playing drop sound after 1 second pause');
+            this.dropSound.currentTime = 0;
+            this.dropSound
+              .play()
+              .catch((e) => console.error("Error playing drop sound:", e));
+          }
 
-      // Go to the next story after 2.5s total (500ms + 2000ms)
-      setTimeout(() => {
-        this.nextStory();
-      }, 2000);
-    }, 500);
+          // Wait 2 more seconds after drop sound, then start next story
+          setTimeout(() => {
+            console.log('Starting next story after drop sound delay');
+            this.nextStory();
+          }, 2000);
+        }, 1000);
+      });
+    }, 2000);
+  }
+
+  fadeOutAndStopBackgroundMusic(callback) {
+    if (!this.backgroundMusic || this.backgroundMusic.paused) {
+      if (callback) callback();
+      return;
+    }
+    
+    console.log('Fading out background music over 3 seconds');
+    const startVolume = this.backgroundMusic.volume;
+    const fadeSteps = 60; // 60 steps over 3 seconds = 50ms per step
+    const volumeStep = startVolume / fadeSteps;
+    let currentStep = 0;
+    
+    const fadeInterval = setInterval(() => {
+      currentStep++;
+      const newVolume = Math.max(0, startVolume - (volumeStep * currentStep));
+      this.backgroundMusic.volume = newVolume;
+      console.log('Fade step:', currentStep, 'Volume:', newVolume.toFixed(2));
+      
+      if (currentStep >= fadeSteps || newVolume <= 0) {
+        clearInterval(fadeInterval);
+        this.backgroundMusic.pause();
+        this.backgroundMusic.currentTime = 0;
+        this.backgroundMusic.volume = 0.6; // Reset for next story
+        console.log('Background music fade out complete');
+        if (callback) callback();
+      }
+    }, 50); // 50ms intervals for smoother fade
   }
 
   nextStory() {
