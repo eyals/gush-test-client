@@ -202,11 +202,13 @@ class MusedropsPlayer {
       });
 
       navigator.mediaSession.setActionHandler("nexttrack", () => {
-        this.nextStory();
+        const shouldAutoPlay = this.isPlaying && !this.audio.paused;
+        this.nextStory(shouldAutoPlay);
       });
 
       navigator.mediaSession.setActionHandler("previoustrack", () => {
-        this.previousStory();
+        const shouldAutoPlay = this.isPlaying && !this.audio.paused;
+        this.previousStory(shouldAutoPlay);
       });
     }
   }
@@ -406,12 +408,15 @@ class MusedropsPlayer {
     const swipeThreshold = 50;
 
     if (absDeltaX >= swipeThreshold) {
+      // Check if currently playing to preserve state
+      const shouldAutoPlay = this.isPlaying && !this.audio.paused;
+      
       if (deltaX > 0) {
         // Swiped left - go to next story
-        this.nextStory();
+        this.nextStory(shouldAutoPlay);
       } else {
         // Swiped right - go to previous story
-        this.previousStory();
+        this.previousStory(shouldAutoPlay);
       }
     } else if (absDeltaX < 10) {
       // It's a tap, toggle play/pause unless it's on a button or progress controls
