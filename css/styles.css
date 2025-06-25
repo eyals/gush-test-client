@@ -223,7 +223,7 @@ body,
   flex-direction: column;
   justify-content: space-between;
   padding: 60px 24px 40px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.25);
   pointer-events: none; /* Allow clicks to pass through to player-view */
 }
 
