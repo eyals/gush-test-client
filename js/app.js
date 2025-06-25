@@ -854,6 +854,7 @@ class MusedropsPlayer {
   pauseBackgroundMusic() {
     if (this.backgroundMusic) {
       this.backgroundMusic.pause();
+      // Volume is preserved when paused - no need to reset it
     }
   }
 
@@ -890,8 +891,10 @@ class MusedropsPlayer {
       const isResume = this.audio.currentTime > 0;
 
       if (isResume) {
-        // When resuming, set to low volume and start music
-        this.backgroundMusic.volume = this.lowVol;
+        // When resuming, ensure low volume is set before starting music
+        if (this.backgroundMusic) {
+          this.backgroundMusic.volume = this.lowVol;
+        }
         this.startBackgroundMusic();
       } else {
         // When starting fresh, use high volume and wait 2 seconds
@@ -913,8 +916,11 @@ class MusedropsPlayer {
         this.enableProgressBar();
         // Lower background music volume when TTS starts
         if (this.backgroundMusic && !this.backgroundMusic.paused) {
-          console.log("Fading background music down for TTS");
-          this.fadeBackgroundMusic(this.highVol, this.lowVol, 500);
+          const currentVol = this.backgroundMusic.volume;
+          if (currentVol > this.lowVol) {
+            console.log("Fading background music down for TTS");
+            this.fadeBackgroundMusic(currentVol, this.lowVol, 500);
+          }
         }
         this.isPlaying = true;
         this.startProgressTracking();
