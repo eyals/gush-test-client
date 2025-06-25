@@ -154,20 +154,23 @@ body,
   top: 65%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: white;
   pointer-events: none;
   z-index: 25;
-  opacity: 0.4;
-  transition: opacity 0.3s ease;
+  opacity: 1.0;
 }
 
 .play-indicator.hidden {
-  opacity: 0;
+  display: none;
 }
 
-.play-indicator .material-icons-round {
-  font-size: 150px;
-  text-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+.play-indicator img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 130px;
+  height: 130px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.3));
 }
 
 /* Player View */

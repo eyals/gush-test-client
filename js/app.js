@@ -106,6 +106,8 @@ class MusedropsPlayer {
       this.playerView = document.getElementById("player-view");
       this.storiesContainer = document.getElementById("stories-container");
       this.playIndicator = document.querySelector(".play-indicator");
+      this.playIcon = document.querySelector(".play-icon");
+      this.speechWaveIcon = document.querySelector(".speech-wave-icon");
 
       // Player elements
       this.progressFill = document.querySelector(".progress-fill");
@@ -310,12 +312,12 @@ class MusedropsPlayer {
 
       this.audio.addEventListener("ended", this.handleStoryEnd.bind(this));
       this.audio.addEventListener("play", () =>
-        this.updatePlayIndicator(false)
+        this.updatePlayIndicator('playing')
       );
       this.audio.addEventListener("pause", () => {
         // Don't show play indicator if audio ended naturally or if we're switching stories
         if (!this.audio.ended && !this.isTransitioning && !this.isSwitchingStories) {
-          this.updatePlayIndicator(true);
+          this.updatePlayIndicator('paused');
         }
       });
       this.audio.addEventListener(
@@ -501,6 +503,9 @@ class MusedropsPlayer {
 
     // Set flag to prevent play indicator during story switch
     this.isSwitchingStories = true;
+    
+    // Hide indicator during transition
+    this.updatePlayIndicator('transition');
 
     this.currentStoryIndex = index;
     const currentStory = this.stories[index];
@@ -553,22 +558,41 @@ class MusedropsPlayer {
         if (autoPlay) {
           await this.play();
         } else {
-          this.updatePlayIndicator(true);
+          this.updatePlayIndicator('paused');
         }
       } catch (error) {
         console.error("Error loading audio:", error);
         this.showError("Error loading audio");
-        this.updatePlayIndicator(true);
+        this.updatePlayIndicator('paused');
       }
     }
   }
 
-  updatePlayIndicator(isPaused) {
-    if (!this.playIndicator) return;
-    if (isPaused) {
-      this.playIndicator.classList.remove("hidden");
-    } else {
-      this.playIndicator.classList.add("hidden");
+  updatePlayIndicator(state) {
+    if (!this.playIndicator || !this.playIcon || !this.speechWaveIcon) return;
+    
+    switch (state) {
+      case 'paused':
+        // Show play button icon
+        this.playIndicator.classList.remove("hidden");
+        this.playIcon.classList.remove("hidden");
+        this.playIcon.style.display = 'block';
+        this.speechWaveIcon.classList.add("hidden");
+        this.speechWaveIcon.style.display = 'none';
+        break;
+      case 'playing':
+        // Show speech wave icon
+        this.playIndicator.classList.remove("hidden");
+        this.playIcon.classList.add("hidden");
+        this.playIcon.style.display = 'none';
+        this.speechWaveIcon.classList.remove("hidden");
+        this.speechWaveIcon.style.display = 'block';
+        break;
+      case 'hidden':
+      case 'transition':
+        // Hide indicator completely
+        this.playIndicator.classList.add("hidden");
+        break;
     }
   }
 
@@ -905,7 +929,7 @@ class MusedropsPlayer {
     this.stopProgressTracking();
 
     // Show play indicator when manually paused (even if audio ended)
-    this.updatePlayIndicator(true);
+    this.updatePlayIndicator('paused');
 
     // Only enable progress controls if audio has actual content to scrub through
     // and we're not in a transition state (like story ending)
@@ -941,7 +965,7 @@ class MusedropsPlayer {
       this.audioMuted = false;
       
       // Always hide play indicator immediately when play is pressed for responsiveness
-      this.updatePlayIndicator(false);
+      this.updatePlayIndicator('hidden');
       
       if (this.audio.currentTime === 0) {
         // Before TTS starts - seek to beginning of intro sequence
@@ -992,6 +1016,9 @@ class MusedropsPlayer {
   handleStoryEnd() {
     console.log("Story ended, starting enhanced ending sequence");
 
+    // Hide the play indicator when story ends
+    this.updatePlayIndicator('hidden');
+
     // Disable progress bar when story ends
     this.disableProgressBar();
 
@@ -1018,7 +1045,7 @@ class MusedropsPlayer {
           // Wait 2 more seconds after drop sound, then start next story
           setTimeout(() => {
             console.log("Starting next story after drop sound delay");
-            this.nextStory();
+            this.nextStory(true); // autoPlay = true for automatic advancement
           }, 2000);
         }, 1000);
       });
@@ -1072,19 +1099,19 @@ class MusedropsPlayer {
     });
   }
 
-  nextStory() {
+  nextStory(autoPlay = false) {
     this.resetTimeDisplays();
     this.stopBackgroundMusic();
     const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
-    this.showStory(nextIndex, true);
+    this.showStory(nextIndex, autoPlay);
   }
 
-  previousStory() {
+  previousStory(autoPlay = false) {
     this.resetTimeDisplays();
     this.stopBackgroundMusic();
     const prevIndex =
       (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
-    this.showStory(prevIndex, true);
+    this.showStory(prevIndex, autoPlay);
   }
 } // End of MusedropsPlayer class
 
