@@ -4,78 +4,40 @@ import { fetchStories } from "./supabase.js";
 import { mockStories } from "./mock-stories.js";
 
 class MusedropsPlayer {
-  // Image transformation function
-  transformImageUrl(imageUrl, size = "full") {
-    if (!imageUrl) return this.getFallbackImageUrl(size);
-
-    // Check if it's already using the new media service format
-    if (imageUrl.includes('media-dev.musedrops.com')) {
-      return imageUrl;
-    }
-
-    // Convert Supabase URL to media service format
-    // Extract the path from Supabase URL
-    let mediaPath = '';
-    if (imageUrl.includes('/storage/v1/object/public/media/')) {
-      mediaPath = imageUrl.split('/storage/v1/object/public/media/')[1];
-    } else if (imageUrl.includes('/storage/v1/render/image/public/media/')) {
-      mediaPath = imageUrl.split('/storage/v1/render/image/public/media/')[1].split('?')[0];
-    } else {
-      // If not a recognized Supabase format, return fallback
-      return this.getFallbackImageUrl(size);
-    }
-
-    // Ensure the path starts with 'media/'
-    if (!mediaPath.startsWith('media/')) {
-      mediaPath = 'media/' + mediaPath;
-    }
-
+  // Build media service URL for any path
+  buildMediaUrl(mediaPath) {
     const encodedPath = encodeURIComponent(mediaPath);
-    
-    // Set size parameter based on requested size
-    let sizeParam = "1000"; // default size
-    if (size === "smallThumb") {
-      sizeParam = "192";
-    } else if (size === "largeThumb") {
-      sizeParam = "512";
-    } else if (size === "full") {
-      sizeParam = "500";
-    }
-    
-    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=${sizeParam}`;
+    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=1000`;
   }
 
-  // Get fallback image URL with same transformation parameters
-  getFallbackImageUrl(size = "full") {
+  // Image transformation function
+  transformImageUrl(imageUrl, showSlug) {
+    if (!imageUrl || !showSlug) return this.getFallbackImageUrl();
+
+    // Construct media path: media/shows/[show-slug]/[filename]
+    const mediaPath = `media/shows/${showSlug}/${imageUrl}`;
+    return this.buildMediaUrl(mediaPath);
+  }
+
+  // Get fallback image URL
+  getFallbackImageUrl() {
     const mediaPath = "media/static/default-show-image.png";
-    const encodedPath = encodeURIComponent(mediaPath);
-    
-    // Use new media service URL format
-    let sizeParam = "1000"; // default size
-    if (size === "smallThumb") {
-      sizeParam = "192";
-    } else if (size === "largeThumb") {
-      sizeParam = "512";
-    } else if (size === "full") {
-      sizeParam = "500";
-    }
-    
-    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=${sizeParam}`;
+    return this.buildMediaUrl(mediaPath);
   }
 
   // Set background image with fallback handling
-  setImageWithFallback(element, imageUrl, size = "full") {
+  setImageWithFallback(element, imageUrl, showSlug) {
     if (!element) return;
 
     // If no image URL provided, use fallback immediately
     if (!imageUrl) {
-      const fallbackUrl = this.getFallbackImageUrl(size);
+      const fallbackUrl = this.getFallbackImageUrl();
       element.style.backgroundImage = `url(${fallbackUrl})`;
       return;
     }
 
     // Try to load the original image first
-    const transformedUrl = this.transformImageUrl(imageUrl, size);
+    const transformedUrl = this.transformImageUrl(imageUrl, showSlug);
     const img = new Image();
 
     img.onload = () => {
@@ -85,7 +47,7 @@ class MusedropsPlayer {
 
     img.onerror = () => {
       // Image failed to load, use fallback
-      const fallbackUrl = this.getFallbackImageUrl(size);
+      const fallbackUrl = this.getFallbackImageUrl();
       element.style.backgroundImage = `url(${fallbackUrl})`;
     };
 
@@ -640,7 +602,7 @@ class MusedropsPlayer {
     // Update story background image with fallback handling
     const storyEl = document.querySelector(`.story[data-id="${story.id}"]`);
     if (storyEl) {
-      this.setImageWithFallback(storyEl, story.shows.image_url, "full");
+      this.setImageWithFallback(storyEl, story.shows.image_url, story.showSlug);
     }
 
     // Reset progress to 0 with no duration until audio loads
@@ -657,11 +619,11 @@ class MusedropsPlayer {
 
         // Get artwork URLs with fallback support
         const smallThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, "smallThumb")
-          : this.getFallbackImageUrl("smallThumb");
+          ? this.transformImageUrl(story.shows.image_url, story.showSlug)
+          : this.getFallbackImageUrl();
         const largeThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, "largeThumb")
-          : this.getFallbackImageUrl("largeThumb");
+          ? this.transformImageUrl(story.shows.image_url, story.showSlug)
+          : this.getFallbackImageUrl();
 
         navigator.mediaSession.metadata = new MediaMetadata({
           title: story.title,
