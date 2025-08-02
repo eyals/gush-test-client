@@ -8,37 +8,59 @@ class MusedropsPlayer {
   transformImageUrl(imageUrl, size = "full") {
     if (!imageUrl) return this.getFallbackImageUrl(size);
 
-    // Replace =/object/ with /render/image/
-    let transformedUrl = imageUrl.replace("=/object/", "/render/image/");
-
-    // Add transformation parameters based on size
-    if (size === "full") {
-      transformedUrl += "?resize=contain&quality=50&width=500";
-    } else if (size === "smallThumb") {
-      transformedUrl += "?resize=cover&quality=50&width=192&height=192";
-    } else if (size === "largeThumb") {
-      transformedUrl += "?resize=cover&quality=50&width=512&height=512";
+    // Check if it's already using the new media service format
+    if (imageUrl.includes('media-dev.musedrops.com')) {
+      return imageUrl;
     }
 
-    return transformedUrl;
+    // Convert Supabase URL to media service format
+    // Extract the path from Supabase URL
+    let mediaPath = '';
+    if (imageUrl.includes('/storage/v1/object/public/media/')) {
+      mediaPath = imageUrl.split('/storage/v1/object/public/media/')[1];
+    } else if (imageUrl.includes('/storage/v1/render/image/public/media/')) {
+      mediaPath = imageUrl.split('/storage/v1/render/image/public/media/')[1].split('?')[0];
+    } else {
+      // If not a recognized Supabase format, return fallback
+      return this.getFallbackImageUrl(size);
+    }
+
+    // Ensure the path starts with 'media/'
+    if (!mediaPath.startsWith('media/')) {
+      mediaPath = 'media/' + mediaPath;
+    }
+
+    const encodedPath = encodeURIComponent(mediaPath);
+    
+    // Set size parameter based on requested size
+    let sizeParam = "1000"; // default size
+    if (size === "smallThumb") {
+      sizeParam = "192";
+    } else if (size === "largeThumb") {
+      sizeParam = "512";
+    } else if (size === "full") {
+      sizeParam = "500";
+    }
+    
+    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=${sizeParam}`;
   }
 
   // Get fallback image URL with same transformation parameters
   getFallbackImageUrl(size = "full") {
-    const baseUrl =
-      "https://ifsdyucvpgshyglmoxkp.supabase.co/storage/v1/object/public/media/static/default-show-image.png";
-    let fallbackUrl = baseUrl.replace("=/object/", "/render/image/");
-
-    // Add same transformation parameters as regular images
-    if (size === "full") {
-      fallbackUrl += "?resize=contain&quality=50&width=500";
-    } else if (size === "smallThumb") {
-      fallbackUrl += "?resize=cover&quality=50&width=192&height=192";
+    const mediaPath = "media/static/default-show-image.png";
+    const encodedPath = encodeURIComponent(mediaPath);
+    
+    // Use new media service URL format
+    let sizeParam = "1000"; // default size
+    if (size === "smallThumb") {
+      sizeParam = "192";
     } else if (size === "largeThumb") {
-      fallbackUrl += "?resize=cover&quality=50&width=512&height=512";
+      sizeParam = "512";
+    } else if (size === "full") {
+      sizeParam = "500";
     }
-
-    return fallbackUrl;
+    
+    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=${sizeParam}`;
   }
 
   // Set background image with fallback handling
@@ -153,7 +175,7 @@ class MusedropsPlayer {
     if (this.backgroundMusic) {
       // Background music volume settings
       this.highVol = 0.6;
-      this.lowVol = 0.07;
+      this.lowVol = 0.05;
       this.fadeStepLength = 100; // 100ms
 
       // Set initial volume to 60% when music starts alone
