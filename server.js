@@ -44,6 +44,10 @@ const server = http.createServer((req, res) => {
         VITE_SUPABASE_ANON_KEY: '${
           process.env.VITE_SUPABASE_ANON_KEY ||
           "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlmc2R5dWN2cGdzaHlnbG1veGtwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk1NzkxNzYsImV4cCI6MjA2NTE1NTE3Nn0.fie3isEuyIvWjQGvgHtaBpbeZJTcJXqrJyuwFSpPneA"
+        }',
+        VITE_MEDIA_SERVICE_URL: '${
+          process.env.VITE_MEDIA_SERVICE_URL ||
+          "https://media-dev.musedrops.com"
         }'
       };
     `);

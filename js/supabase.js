@@ -18,24 +18,38 @@ function getEnvVar(name, fallback = '') {
   }
 }
 
-// Initialize the Supabase client with environment variables
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
-
-// Only create Supabase client if we have the required variables
+// Initialize the Supabase client - will be set when initializeSupabase is called
 let supabase = null;
-if (supabaseUrl && supabaseAnonKey) {
-  supabase = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false
-    }
+
+// Function to initialize Supabase client after env is loaded
+function initializeSupabase() {
+  const supabaseUrl = getEnvVar('VITE_SUPABASE_URL');
+  const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY');
+
+  console.log('Supabase initialization:', {
+    url: supabaseUrl ? 'Found' : 'Missing',
+    key: supabaseAnonKey ? 'Found' : 'Missing',
+    windowEnv: typeof window !== 'undefined' ? !!window.env : 'No window'
   });
-} else {
-  console.warn('Supabase client not initialized - missing required environment variables');
+
+  if (supabaseUrl && supabaseAnonKey) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false
+      }
+    });
+    console.log('Supabase client created successfully');
+    return true;
+  } else {
+    console.warn('Supabase client not initialized - missing required environment variables');
+    console.warn('URL:', supabaseUrl);
+    console.warn('Key:', supabaseAnonKey);
+    return false;
+  }
 }
 
-export { supabase };
+export { supabase, initializeSupabase };
 
 // Helper function to generate a random number between min and max (inclusive)
 function getRandomLikeCount(min = 10, max = 300) {
@@ -79,6 +93,7 @@ export async function fetchStories() {
       return {
         id: story.id,
         title: story.title,
+        slug: story.showSlug,
         // Generate a random duration between 30 and 300 seconds (5 minutes)
         duration: Math.floor(Math.random() * 270) + 30,
         ttsAudioUrl: story.ttsAudioUrl,

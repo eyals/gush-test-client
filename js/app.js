@@ -1,5 +1,5 @@
 // Import Supabase client and fetch function
-import { fetchStories } from "./supabase.js";
+import { fetchStories, initializeSupabase } from "./supabase.js";
 // Keep mock stories as fallback
 import { mockStories } from "./mock-stories.js";
 
@@ -7,47 +7,71 @@ class MusedropsPlayer {
   // Build media service URL for any path
   buildMediaUrl(mediaPath) {
     const encodedPath = encodeURIComponent(mediaPath);
-    return `https://media-dev.musedrops.com/image?file=${encodedPath}&size=1000`;
+    const mediaServiceUrl = window.env?.VITE_MEDIA_SERVICE_URL || 'https://media-dev.musedrops.com';
+    const url = `${mediaServiceUrl}/image?file=${encodedPath}&size=1000`;
+    console.log(`[IMAGE] Built URL: ${url} from path: ${mediaPath}`);
+    return url;
   }
 
   // Image transformation function
-  transformImageUrl(imageUrl, showSlug) {
-    if (!imageUrl || !showSlug) return this.getFallbackImageUrl();
+  transformImageUrl(imageUrl, slug) {
+    console.log(`[IMAGE] Transform request - imageUrl: ${imageUrl}, slug: ${slug}`);
+    if (!imageUrl || !slug) {
+      console.log(`[IMAGE] Missing data, using fallback`);
+      return this.getFallbackImageUrl();
+    }
 
-    // Construct media path: media/shows/[show-slug]/[filename]
-    const mediaPath = `media/shows/${showSlug}/${imageUrl}`;
+    // Extract filename from URL if it's a full Supabase URL
+    let filename = imageUrl;
+    if (imageUrl.includes('supabase.co')) {
+      // Extract just the filename from the URL
+      const urlParts = imageUrl.split('/');
+      filename = urlParts[urlParts.length - 1];
+      // Remove any query parameters
+      filename = filename.split('?')[0];
+      console.log(`[IMAGE] Extracted filename from Supabase URL: ${filename}`);
+    }
+
+    // Construct media path: media/shows/[slug]/[filename]
+    const mediaPath = `media/shows/${slug}/${filename}`;
+    console.log(`[IMAGE] Constructed media path: ${mediaPath}`);
     return this.buildMediaUrl(mediaPath);
   }
 
   // Get fallback image URL
   getFallbackImageUrl() {
     const mediaPath = "media/static/default-show-image.png";
+    console.log(`[IMAGE] Using fallback image path: ${mediaPath}`);
     return this.buildMediaUrl(mediaPath);
   }
 
   // Set background image with fallback handling
-  setImageWithFallback(element, imageUrl, showSlug) {
+  setImageWithFallback(element, imageUrl, slug) {
+    console.log(`[IMAGE] setImageWithFallback called - element: ${element?.className}, imageUrl: ${imageUrl}, slug: ${slug}`);
     if (!element) return;
 
     // If no image URL provided, use fallback immediately
     if (!imageUrl) {
+      console.log(`[IMAGE] No imageUrl provided, using fallback`);
       const fallbackUrl = this.getFallbackImageUrl();
       element.style.backgroundImage = `url(${fallbackUrl})`;
       return;
     }
 
     // Try to load the original image first
-    const transformedUrl = this.transformImageUrl(imageUrl, showSlug);
+    const transformedUrl = this.transformImageUrl(imageUrl, slug);
+    console.log(`[IMAGE] Attempting to load: ${transformedUrl}`);
     const img = new Image();
 
     img.onload = () => {
-      // Image loaded successfully, set it as background
+      console.log(`[IMAGE] ✅ Successfully loaded: ${transformedUrl}`);
       element.style.backgroundImage = `url(${transformedUrl})`;
     };
 
-    img.onerror = () => {
-      // Image failed to load, use fallback
+    img.onerror = (error) => {
+      console.log(`[IMAGE] ❌ Failed to load: ${transformedUrl}`, error);
       const fallbackUrl = this.getFallbackImageUrl();
+      console.log(`[IMAGE] Using fallback: ${fallbackUrl}`);
       element.style.backgroundImage = `url(${fallbackUrl})`;
     };
 
@@ -319,13 +343,21 @@ class MusedropsPlayer {
 
   async loadStories() {
     try {
+      // Initialize Supabase client first
+      const supabaseInitialized = initializeSupabase();
+      
       // Try to fetch from Supabase first
       let stories = [];
 
-      try {
-        stories = await fetchStories();
-      } catch (error) {
-        // Silently handle the error - we'll fall back to mock data
+      if (supabaseInitialized) {
+        try {
+          stories = await fetchStories();
+        } catch (error) {
+          console.error('Error fetching stories from Supabase:', error);
+          // We'll fall back to mock data
+        }
+      } else {
+        console.warn('Supabase not initialized, using mock data');
       }
 
       // If we got stories from Supabase, use them
@@ -602,7 +634,7 @@ class MusedropsPlayer {
     // Update story background image with fallback handling
     const storyEl = document.querySelector(`.story[data-id="${story.id}"]`);
     if (storyEl) {
-      this.setImageWithFallback(storyEl, story.shows.image_url, story.showSlug);
+      this.setImageWithFallback(storyEl, story.shows.image_url, story.slug);
     }
 
     // Reset progress to 0 with no duration until audio loads
@@ -619,10 +651,10 @@ class MusedropsPlayer {
 
         // Get artwork URLs with fallback support
         const smallThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, story.showSlug)
+          ? this.transformImageUrl(story.shows.image_url, story.slug)
           : this.getFallbackImageUrl();
         const largeThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, story.showSlug)
+          ? this.transformImageUrl(story.shows.image_url, story.slug)
           : this.getFallbackImageUrl();
 
         navigator.mediaSession.metadata = new MediaMetadata({
@@ -757,15 +789,7 @@ class MusedropsPlayer {
   }
 
   async loadBackgroundMusic(story) {
-    console.log(
-      "Loading background music for story:",
-      story.title,
-      "music_url:",
-      story.shows.music_url
-    );
-
     if (!this.backgroundMusic || !story.shows.music_url) {
-      console.log("No background music element or music_url, stopping music");
       // Stop background music if no music_url
       this.stopBackgroundMusic();
       return;
@@ -777,7 +801,6 @@ class MusedropsPlayer {
       this.backgroundMusic.src &&
       this.backgroundMusic.src.includes(story.shows.music_url)
     ) {
-      console.log("Same music source, not reloading");
       return;
     }
 
@@ -785,7 +808,6 @@ class MusedropsPlayer {
     this.stopBackgroundMusic();
 
     // Load new background music
-    console.log("Setting background music source to:", story.shows.music_url);
     this.backgroundMusic.src = story.shows.music_url;
 
     return new Promise((resolve, reject) => {
@@ -811,14 +833,8 @@ class MusedropsPlayer {
   }
 
   startBackgroundMusic() {
-    console.log(
-      "Attempting to start background music, src:",
-      this.backgroundMusic?.src
-    );
-    
     // Check master audio switch
     if (this.audioMuted) {
-      console.log("Audio is muted, not starting background music");
       return;
     }
     
@@ -857,21 +873,11 @@ class MusedropsPlayer {
 
     // Check master audio switch
     if (this.audioMuted) {
-      console.log("Audio is muted, not playing");
       return;
     }
 
-    console.log(
-      "Play method called, currentStory:",
-      this.currentStory?.title,
-      "music_url:",
-      this.currentStory?.shows?.music_url
-    );
-    console.log("Audio currentTime:", this.audio.currentTime);
-
     // Start background music first if available
     if (this.currentStory && this.currentStory.shows.music_url) {
-      console.log("Starting background music...");
       const isResume = this.audio.currentTime > 0;
 
       if (isResume) {
@@ -884,16 +890,13 @@ class MusedropsPlayer {
         // When starting fresh, use high volume and wait 2 seconds
         this.backgroundMusic.volume = this.highVol;
         this.startBackgroundMusic();
-        console.log("Waiting 2 seconds before starting TTS...");
         await new Promise((resolve) => setTimeout(resolve, 2000));
-        console.log("2 second delay complete, starting TTS");
       }
     }
 
     this.audio
       .play()
       .then(() => {
-        console.log("TTS started successfully");
         // Clear story switching flag now that audio is playing
         this.isSwitchingStories = false;
         // Enable progress bar when TTS starts
@@ -902,7 +905,6 @@ class MusedropsPlayer {
         if (this.backgroundMusic && !this.backgroundMusic.paused) {
           const currentVol = this.backgroundMusic.volume;
           if (currentVol > this.lowVol) {
-            console.log("Fading background music down for TTS");
             this.fadeBackgroundMusic(currentVol, this.lowVol, 500);
           }
         }
@@ -964,12 +966,10 @@ class MusedropsPlayer {
       
       if (this.audio.currentTime === 0) {
         // Before TTS starts - seek to beginning of intro sequence
-        console.log("Play pressed before TTS starts - seeking to beginning");
         this.audio.currentTime = 0;
         this.play();
       } else if (this.audio.ended) {
         // After TTS ends - unmute and let timers run
-        console.log("Play pressed after TTS ends - unmuting audio");
         // Audio is already muted, timers will continue
       } else {
         // During TTS - normal resume
@@ -1009,8 +1009,6 @@ class MusedropsPlayer {
   }
 
   handleStoryEnd() {
-    console.log("Story ended, starting enhanced ending sequence");
-
     // Hide the play indicator when story ends
     this.updatePlayIndicator('hidden');
 
@@ -1019,7 +1017,6 @@ class MusedropsPlayer {
 
     // Raise background music volume when TTS ends
     if (this.backgroundMusic && !this.backgroundMusic.paused) {
-      console.log("Fading background music up at story end");
       this.fadeBackgroundMusic(this.lowVol, this.highVol, 800);
     }
 
@@ -1030,7 +1027,6 @@ class MusedropsPlayer {
         // Wait 1 second after fade out completes, then play drop sound
         setTimeout(() => {
           if (this.dropSound && !this.audioMuted) {
-            console.log("Playing drop sound after 1 second pause");
             this.dropSound.currentTime = 0;
             this.dropSound
               .play()
@@ -1039,7 +1035,6 @@ class MusedropsPlayer {
 
           // Wait 2 more seconds after drop sound, then start next story
           setTimeout(() => {
-            console.log("Starting next story after drop sound delay");
             this.nextStory(true); // autoPlay = true for automatic advancement
           }, 2000);
         }, 1000);
@@ -1089,7 +1084,6 @@ class MusedropsPlayer {
       this.backgroundMusic.pause();
       this.backgroundMusic.currentTime = 0;
       this.backgroundMusic.volume = this.highVol; // Reset for next story
-      console.log("Background music fade out and stop complete");
       if (callback) callback();
     });
   }
