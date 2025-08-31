@@ -390,26 +390,22 @@ class MusedropsPlayer {
       if (stories && stories.length > 0) {
         this.stories = stories;
       } else {
-        // If no stories from Supabase, use mock data
-        this.showError("No stories available. Using demo content.");
-        this.stories = mockStories;
-      }
-
-      // Make sure we have at least one story
-      if (!this.stories || this.stories.length === 0) {
-        this.showError("No stories available");
-        throw new Error("No stories available from any source");
+        // If no stories from Supabase, show error - NO fallback to mock data
+        this.showError("No stories available from database");
+        throw new Error("No stories available from database");
       }
     } catch (error) {
-      // If there's any error, use mock data
-      this.showError("Loading stories. Using demo content.");
-      this.stories = mockStories;
+      // If there's any error, show error - NO fallback to mock data  
+      this.showError("Error loading stories from database");
+      throw new Error("Error loading stories: " + error.message);
     } finally {
-      // Always render whatever stories we have
+      // Only render stories if we actually have them
       try {
-        this.renderStories();
+        if (this.stories && this.stories.length > 0) {
+          this.renderStories();
+        }
       } catch (renderError) {
-        this.showError("Failed to load stories");
+        this.showError("Failed to render stories");
       }
     }
   }

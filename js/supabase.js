@@ -75,7 +75,7 @@ export async function fetchStories() {
     
     const { data, error } = await supabase
       .from('stories')
-      .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url, music_url)')
+      .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_file, music_url)')
       .not('ttsAudioUrl', 'is', 'null')
       .order('updatedAt', { ascending: false })
       .limit(50);
@@ -90,6 +90,13 @@ export async function fetchStories() {
 
     // Transform the data to match your existing format
     const transformedStories = data.map(story => {
+      // Construct image URL from image_file if available
+      let imageUrl = '';
+      if (story.shows?.image_file && story.showSlug) {
+        const encodedPath = encodeURIComponent(`media/shows/${story.showSlug}/${story.shows.image_file}`);
+        imageUrl = `https://media-dev.musedrops.com/image?file=${encodedPath}&size=1000`;
+      }
+      
       return {
         id: story.id,
         title: story.title,
@@ -99,7 +106,7 @@ export async function fetchStories() {
         ttsAudioUrl: story.ttsAudioUrl,
         shows: story.shows ? {
           name: story.shows.name || '',
-          image_url: story.shows.image_url || '',
+          image_url: imageUrl,
           music_url: story.shows.music_url || null
         } : { name: '', image_url: '', music_url: null },
         likes: [{
