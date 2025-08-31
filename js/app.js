@@ -1077,11 +1077,18 @@ class MusedropsPlayer {
     // Calculate total scrollable height
     const scrollHeight = this.captionsContent.scrollHeight;
     const containerHeight = this.captionsContent.clientHeight;
-    const maxScroll = scrollHeight - containerHeight;
+    const totalScrollableContent = scrollHeight - containerHeight;
     
     // Only scroll if there's content to scroll
-    if (maxScroll > 0) {
-      const scrollPosition = progress * maxScroll;
+    if (totalScrollableContent > 0) {
+      // Center the current position in the viewport
+      // At 0% progress: show first line at center (scroll to -containerHeight/2, but clamp to 0)
+      // At 100% progress: show last line at center (scroll to totalScrollableContent + containerHeight/2, but clamp to max)
+      
+      const centerOffset = containerHeight / 2;
+      const targetContentPosition = progress * scrollHeight;
+      const scrollPosition = Math.max(0, Math.min(totalScrollableContent, targetContentPosition - centerOffset));
+      
       this.captionsContent.scrollTop = scrollPosition;
     }
   }
