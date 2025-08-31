@@ -18,7 +18,11 @@
       "Bash(rm:*)",
       "Bash(gh issue close:*)",
       "Bash(gh issue comment:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(curl:*)",
+      "Bash(mv:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }
