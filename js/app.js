@@ -45,6 +45,22 @@ class MusedropsPlayer {
     return this.buildMediaUrl(mediaPath);
   }
 
+  // Clean script text by removing speaker labels and bracketed content
+  cleanScript(script) {
+    if (!script) return "";
+    
+    // Remove "Speaker 1: ", "Speaker 2: " etc.
+    let cleanedScript = script.replace(/Speaker\s+\d+:\s*/gi, "");
+    
+    // Remove anything in square brackets like [laugh], [music], etc.
+    cleanedScript = cleanedScript.replace(/\[.*?\]/g, "");
+    
+    // Clean up extra whitespace
+    cleanedScript = cleanedScript.replace(/\s+/g, " ").trim();
+    
+    return cleanedScript;
+  }
+
   // Set background image with fallback handling
   setImageWithFallback(element, imageUrl, slug) {
     console.log(`[IMAGE] setImageWithFallback called - element: ${element?.className}, imageUrl: ${imageUrl}, slug: ${slug}`);
@@ -91,6 +107,12 @@ class MusedropsPlayer {
     this.progressInterval = null;
     this.hasInteracted = false;
     this.audioMuted = false; // Universal master audio switch
+    
+    // Captions properties
+    this.captionsDisplay = null;
+    this.captionsContent = null;
+    this.captionsScrollInterval = null;
+    this.currentScript = "";
 
     // Initialize audio
     this.audio = new Audio();
@@ -127,6 +149,10 @@ class MusedropsPlayer {
       this.forwardBtn = document.getElementById("forward-btn");
       this.likeBtn = document.querySelector(".like-btn");
       this.likeCount = document.querySelector(".like-count");
+
+      // Captions elements
+      this.captionsDisplay = document.getElementById("captions-display");
+      this.captionsContent = document.getElementById("captions-content");
 
       // Check for required elements
       if (!this.initialMode || !this.playerView || !this.storiesContainer) {
@@ -548,6 +574,9 @@ class MusedropsPlayer {
     // Update story info in the UI
     this.updateStoryInfo(currentStory);
 
+    // Load and display script for captions
+    this.loadScript(currentStory);
+
     // Handle background music
     await this.loadBackgroundMusic(currentStory);
 
@@ -684,6 +713,27 @@ class MusedropsPlayer {
       } catch (error) {
         console.error("Error setting media session metadata:", error);
       }
+    }
+  }
+
+  // Load and display script for captions
+  loadScript(story) {
+    if (!story || !story.script) {
+      this.currentScript = "";
+      if (this.captionsContent) {
+        this.captionsContent.textContent = "";
+      }
+      return;
+    }
+
+    // Clean the script text
+    this.currentScript = this.cleanScript(story.script);
+    
+    // Display the script in the captions area
+    if (this.captionsContent) {
+      this.captionsContent.textContent = this.currentScript;
+      // Reset scroll position
+      this.captionsContent.scrollTop = 0;
     }
   }
 
@@ -910,6 +960,7 @@ class MusedropsPlayer {
         }
         this.isPlaying = true;
         this.startProgressTracking();
+        this.startCaptionsScroll();
       })
       .catch((error) => {
         console.error("Error playing audio:", error);
@@ -924,6 +975,7 @@ class MusedropsPlayer {
     // No need to fade volume when pausing since music is stopped
     this.isPlaying = false;
     this.stopProgressTracking();
+    this.stopCaptionsScroll();
 
     // Show play indicator when manually paused (even if audio ended)
     this.updatePlayIndicator('paused');
@@ -981,6 +1033,43 @@ class MusedropsPlayer {
   startProgressTracking() {
     // Progress tracking is now handled by timeupdate event listener
     // Keep this method for compatibility but no longer use interval
+  }
+
+  // Start captions auto-scroll (50ms intervals)
+  startCaptionsScroll() {
+    this.stopCaptionsScroll(); // Clear any existing interval
+    
+    this.captionsScrollInterval = setInterval(() => {
+      this.updateCaptionsScroll();
+    }, 50);
+  }
+
+  // Stop captions auto-scroll
+  stopCaptionsScroll() {
+    if (this.captionsScrollInterval) {
+      clearInterval(this.captionsScrollInterval);
+      this.captionsScrollInterval = null;
+    }
+  }
+
+  // Update captions scroll position based on playback progress
+  updateCaptionsScroll() {
+    if (!this.audio || !this.captionsContent || !this.currentScript) return;
+    if (this.audio.duration <= 0 || this.isSwitchingStories) return;
+
+    // Calculate playback progress percentage
+    const progress = this.audio.currentTime / this.audio.duration;
+    
+    // Calculate total scrollable height
+    const scrollHeight = this.captionsContent.scrollHeight;
+    const containerHeight = this.captionsContent.clientHeight;
+    const maxScroll = scrollHeight - containerHeight;
+    
+    // Only scroll if there's content to scroll
+    if (maxScroll > 0) {
+      const scrollPosition = progress * maxScroll;
+      this.captionsContent.scrollTop = scrollPosition;
+    }
   }
 
   stopProgressTracking() {
@@ -1091,6 +1180,7 @@ class MusedropsPlayer {
   nextStory(autoPlay = false) {
     this.resetTimeDisplays();
     this.stopBackgroundMusic();
+    this.stopCaptionsScroll();
     const nextIndex = (this.currentStoryIndex + 1) % this.stories.length;
     this.showStory(nextIndex, autoPlay);
   }
@@ -1098,6 +1188,7 @@ class MusedropsPlayer {
   previousStory(autoPlay = false) {
     this.resetTimeDisplays();
     this.stopBackgroundMusic();
+    this.stopCaptionsScroll();
     const prevIndex =
       (this.currentStoryIndex - 1 + this.stories.length) % this.stories.length;
     this.showStory(prevIndex, autoPlay);

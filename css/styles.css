@@ -528,3 +528,28 @@ body,
     padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 }
+
+/* Captions Display */
+.captions-display {
+  position: absolute;
+  bottom: 120px; /* Position above player controls */
+  left: 20px;
+  right: 20px;
+  height: 50px;
+  background: transparent;
+  overflow: hidden;
+  z-index: 10;
+}
+
+.captions-content {
+  font-size: 18px;
+  color: white;
+  line-height: 1.4;
+  font-family: "Instrument Sans", sans-serif;
+  font-weight: 400;
+  text-align: center;
+  height: 100%;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
