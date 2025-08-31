@@ -74,25 +74,25 @@ class MusedropsPlayer {
       return;
     }
 
-    // Try to load the original image first
-    const transformedUrl = this.transformImageUrl(imageUrl, slug);
-    console.log(`[IMAGE] Attempting to load: ${transformedUrl}`);
+    // Check if imageUrl is already a full URL (from Supabase transformation)
+    const finalUrl = imageUrl.startsWith('http') ? imageUrl : this.transformImageUrl(imageUrl, slug);
+    console.log(`[IMAGE] Attempting to load: ${finalUrl}`);
     const img = new Image();
 
     img.onload = () => {
-      console.log(`[IMAGE] ✅ Successfully loaded: ${transformedUrl}`);
-      element.style.backgroundImage = `url(${transformedUrl})`;
+      console.log(`[IMAGE] ✅ Successfully loaded: ${finalUrl}`);
+      element.style.backgroundImage = `url(${finalUrl})`;
     };
 
     img.onerror = (error) => {
-      console.log(`[IMAGE] ❌ Failed to load: ${transformedUrl}`, error);
+      console.log(`[IMAGE] ❌ Failed to load: ${finalUrl}`, error);
       const fallbackUrl = this.getFallbackImageUrl();
       console.log(`[IMAGE] Using fallback: ${fallbackUrl}`);
       element.style.backgroundImage = `url(${fallbackUrl})`;
     };
 
     // Start loading the image
-    img.src = transformedUrl;
+    img.src = finalUrl;
   }
 
   constructor() {
@@ -676,10 +676,10 @@ class MusedropsPlayer {
 
         // Get artwork URLs with fallback support
         const smallThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, story.slug)
+          ? (story.shows.image_url.startsWith('http') ? story.shows.image_url : this.transformImageUrl(story.shows.image_url, story.slug))
           : this.getFallbackImageUrl();
         const largeThumbUrl = story.shows.image_url
-          ? this.transformImageUrl(story.shows.image_url, story.slug)
+          ? (story.shows.image_url.startsWith('http') ? story.shows.image_url : this.transformImageUrl(story.shows.image_url, story.slug))
           : this.getFallbackImageUrl();
 
         navigator.mediaSession.metadata = new MediaMetadata({
