@@ -736,9 +736,9 @@ class MusedropsPlayer {
       // Clean the script text
       this.currentScript = this.cleanScript(script);
       
-      // Display the script in the captions area
+      // Display the script in the captions area with line breaks at start and end
       if (this.captionsContent) {
-        this.captionsContent.textContent = this.currentScript;
+        this.captionsContent.textContent = `\n${this.currentScript}\n`;
         // Reset scroll position
         this.captionsContent.scrollTop = 0;
       }
