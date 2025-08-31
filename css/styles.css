@@ -151,7 +151,7 @@ body,
 /* Play Indicator */
 .play-indicator {
   position: absolute;
-  top: 65%;
+  top: 60%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -535,7 +535,7 @@ body,
   bottom: 80px; /* Position above player controls */
   left: 20px;
   right: 20px;
-  height: 80px;
+  height: 100px;
   background: transparent;
   overflow: hidden;
   z-index: 10;
