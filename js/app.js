@@ -1,5 +1,5 @@
 // Import Supabase client and fetch function
-import { fetchStories, initializeSupabase } from "./supabase.js";
+import { fetchStories, fetchStoryScript, initializeSupabase } from "./supabase.js";
 // Keep mock stories as fallback
 import { mockStories } from "./mock-stories.js";
 
@@ -575,7 +575,7 @@ class MusedropsPlayer {
     this.updateStoryInfo(currentStory);
 
     // Load and display script for captions
-    this.loadScript(currentStory);
+    await this.loadScript(currentStory);
 
     // Handle background music
     await this.loadBackgroundMusic(currentStory);
@@ -717,8 +717,8 @@ class MusedropsPlayer {
   }
 
   // Load and display script for captions
-  loadScript(story) {
-    if (!story || !story.script) {
+  async loadScript(story) {
+    if (!story) {
       this.currentScript = "";
       if (this.captionsContent) {
         this.captionsContent.textContent = "";
@@ -726,14 +726,32 @@ class MusedropsPlayer {
       return;
     }
 
-    // Clean the script text
-    this.currentScript = this.cleanScript(story.script);
-    
-    // Display the script in the captions area
-    if (this.captionsContent) {
-      this.captionsContent.textContent = this.currentScript;
-      // Reset scroll position
-      this.captionsContent.scrollTop = 0;
+    try {
+      let script = "";
+      
+      // If story already has script (mock data), use it
+      if (story.script) {
+        script = story.script;
+      } else {
+        // Fetch script from Supabase for real stories
+        script = await fetchStoryScript(story.id);
+      }
+
+      // Clean the script text
+      this.currentScript = this.cleanScript(script);
+      
+      // Display the script in the captions area
+      if (this.captionsContent) {
+        this.captionsContent.textContent = this.currentScript;
+        // Reset scroll position
+        this.captionsContent.scrollTop = 0;
+      }
+    } catch (error) {
+      console.error('Error loading script:', error);
+      this.currentScript = "";
+      if (this.captionsContent) {
+        this.captionsContent.textContent = "";
+      }
     }
   }
 
