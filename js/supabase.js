@@ -75,7 +75,7 @@ export async function fetchStories() {
     
     const { data, error } = await supabase
       .from('stories')
-      .select('id, title, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url, music_url)')
+      .select('id, title, script, ttsAudioUrl, updatedAt, showSlug, shows(name, image_url, music_url)')
       .not('ttsAudioUrl', 'is', 'null')
       .order('updatedAt', { ascending: false })
       .limit(50);
@@ -94,6 +94,7 @@ export async function fetchStories() {
         id: story.id,
         title: story.title,
         slug: story.showSlug,
+        script: story.script || '',
         // Generate a random duration between 30 and 300 seconds (5 minutes)
         duration: Math.floor(Math.random() * 270) + 30,
         ttsAudioUrl: story.ttsAudioUrl,
